@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__activate_project",
+      "Bash(mkdir:*)",
+      "Bash(psql:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(pkill:*)",
+      "Bash(npm create:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "mcp__serena__find_symbol",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "Bash(ln:*)",
+      "Bash(npx:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm init:*)",
+      "Bash(npm:*)",
+      "Bash(node:*)",
+      "Bash(lsof:*)",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__list_memories",
+      "mcp__serena__replace_symbol_body"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

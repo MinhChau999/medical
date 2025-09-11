@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: medical_postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-dobby}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-root@123}
+      POSTGRES_DB: ${DATABASE_NAME:-medical}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - medical_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-dobby}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: medical_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - medical_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medical_backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-medical}
+      DATABASE_USER: ${DATABASE_USER:-dobby}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-root@123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-secret-key-here}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    networks:
+      - medical_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Admin Dashboard
+  admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    container_name: medical_admin
+    environment:
+      REACT_APP_API_URL: ${API_URL:-http://localhost:3000/api/v1}
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - medical_network
+
+  # E-commerce Shop
+  shop:
+    build:
+      context: ./frontend/shop
+      dockerfile: Dockerfile
+    container_name: medical_shop
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL:-http://localhost:3000/api/v1}
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "3002:3000"
+    depends_on:
+      - backend
+    networks:
+      - medical_network
+
+  # POS System
+  pos:
+    build:
+      context: ./frontend/pos
+      dockerfile: Dockerfile
+    container_name: medical_pos
+    environment:
+      REACT_APP_API_URL: ${API_URL:-http://localhost:3000/api/v1}
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "3003:80"
+    depends_on:
+      - backend
+    networks:
+      - medical_network
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: medical_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+      - admin
+      - shop
+      - pos
+    networks:
+      - medical_network
+
+networks:
+  medical_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,196 @@
+# Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Production builds
+dist/
+dist-ssr/
+build/
+*/dist/
+*/build/
+*.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Cache
+.npm
+.eslintcache
+.stylelintcache
+.parcel-cache
+.cache/
+.turbo/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+data/
+
+# Uploads and media
+uploads/
+public/uploads/
+static/uploads/
+media/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Package manager locks (keep one based on your preference)
+# Comment out the one you want to keep
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Python (if any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cer
+
+# Session data
+sessions/
+*.session
+
+# Redis dump
+dump.rdb
+
+# PostgreSQL
+*.sql
+!migrations/*.sql
+!schema/*.sql
+
+# Build artifacts
+*.pid
+*.seed
+*.pid.lock
+
+# Webpack
+.webpack/
+
+# Next.js (if using Next.js)
+.next/
+out/
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Storybook
+storybook-static/
+
+# Documentation
+docs/_build/
+
+# Miscellaneous
+.grunt
+.lock-wscript
+.node_repl_history
+.yarn-integrity
+.cache
+.parcel-cache
+.next
+.nuxt
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Medical app specific
+patient-data/
+medical-records/
+prescriptions/
+lab-results/
+*.dicom
+*.hl7
+
+# Analytics and monitoring
+.monitoring/
+analytics-reports/
+
+# Temporary development databases
+postgres-data/
+mysql-data/
+mongodb-data/
+redis-data/

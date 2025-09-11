@@ -1,0 +1,701 @@
+/* Medical Theme Design System */
+:root {
+  /* Light Mode Colors */
+  --medical-primary: #00A6B8;
+  --medical-primary-dark: #008A96;
+  --medical-primary-light: #26C6DA;
+  --medical-secondary: #4A90E2;
+  --medical-secondary-dark: #357ABD;
+  --medical-secondary-light: #6BA3E5;
+  --medical-accent: #26C6DA;
+  --medical-success: #4CAF50;
+  --medical-warning: #FF9800;
+  --medical-danger: #F44336;
+  --medical-info: #2196F3;
+  
+  /* Light Mode Backgrounds */
+  --medical-bg-primary: #FFFFFF;
+  --medical-bg-secondary: #F8FAFB;
+  --medical-bg-tertiary: #EFF3F6;
+  --medical-bg-sidebar: #1A2332;
+  --medical-bg-hover: rgba(255, 255, 255, 0.08);
+  --medical-bg-selected: rgba(255, 255, 255, 0.12);
+  
+  /* Light Mode Text */
+  --medical-text-primary: #1A2332;
+  --medical-text-secondary: #4A5568;
+  --medical-text-tertiary: #718096;
+  --medical-text-muted: #A0AEC0;
+  --medical-text-inverse: #FFFFFF;
+  
+  /* Light Mode Borders */
+  --medical-border-primary: #E2E8F0;
+  --medical-border-secondary: #CBD5E0;
+  --medical-border-focus: var(--medical-primary);
+  
+  /* Shadows */
+  --medical-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --medical-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --medical-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --medical-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Gradients */
+  --medical-gradient-primary: linear-gradient(135deg, #00A6B8 0%, #26C6DA 100%);
+  --medical-gradient-secondary: linear-gradient(135deg, #4A90E2 0%, #6BA3E5 100%);
+  --medical-gradient-sidebar: linear-gradient(180deg, #1A2332 0%, #0F1419 100%);
+  --medical-gradient-header: linear-gradient(90deg, rgba(0, 166, 184, 0.05) 0%, rgba(38, 198, 218, 0.05) 100%);
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  /* Dark Mode Colors */
+  --medical-primary: #26C6DA;
+  --medical-primary-dark: #00A6B8;
+  --medical-primary-light: #4DD0E1;
+  --medical-secondary: #6BA3E5;
+  --medical-secondary-dark: #4A90E2;
+  --medical-secondary-light: #90B9EA;
+  
+  /* Dark Mode Backgrounds */
+  --medical-bg-primary: #0F1419;
+  --medical-bg-secondary: #1A1F29;
+  --medical-bg-tertiary: #242B38;
+  --medical-bg-sidebar: #131821;
+  --medical-bg-hover: rgba(38, 198, 218, 0.1);
+  --medical-bg-selected: rgba(38, 198, 218, 0.15);
+  
+  /* Dark Mode Text */
+  --medical-text-primary: #E8EAED;
+  --medical-text-secondary: #B8BCC3;
+  --medical-text-tertiary: #8B92A0;
+  --medical-text-muted: #5F6B7C;
+  --medical-text-inverse: #0F1419;
+  
+  /* Dark Mode Borders */
+  --medical-border-primary: #2D3748;
+  --medical-border-secondary: #4A5568;
+  --medical-border-focus: var(--medical-primary);
+  
+  /* Dark Mode Shadows */
+  --medical-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --medical-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --medical-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --medical-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+  
+  /* Dark Mode Gradients */
+  --medical-gradient-primary: linear-gradient(135deg, #26C6DA 0%, #4DD0E1 100%);
+  --medical-gradient-secondary: linear-gradient(135deg, #6BA3E5 0%, #90B9EA 100%);
+  --medical-gradient-sidebar: linear-gradient(180deg, #131821 0%, #0F1419 100%);
+  --medical-gradient-header: linear-gradient(90deg, rgba(38, 198, 218, 0.08) 0%, rgba(77, 208, 225, 0.08) 100%);
+}
+
+/* Medical Theme Components */
+.medical-sidebar {
+  background: var(--medical-gradient-sidebar) !important;
+  border-right: 1px solid var(--medical-border-primary) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light mode sidebar - keep dark */
+[data-theme="light"] .medical-sidebar {
+  background: linear-gradient(180deg, #1A2332 0%, #0F1419 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Dark mode sidebar - slightly lighter */
+[data-theme="dark"] .medical-sidebar {
+  background: linear-gradient(180deg, #2A3441 0%, #1F2937 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.medical-sidebar-logo {
+  background: var(--medical-gradient-primary) !important;
+  box-shadow: var(--medical-shadow-md);
+  transition: transform 0.3s ease;
+}
+
+.medical-sidebar-logo:hover {
+  transform: scale(1.05);
+}
+
+.medical-header {
+  background: var(--medical-bg-primary) !important;
+  border-bottom: 1px solid var(--medical-border-primary) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--medical-shadow-sm) !important;
+}
+
+.medical-content {
+  background: var(--medical-bg-secondary) !important;
+}
+
+.medical-card {
+  background: var(--medical-bg-primary) !important;
+  border: 1px solid var(--medical-border-primary) !important;
+  box-shadow: var(--medical-shadow-sm) !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.medical-card:hover {
+  transform: none !important;
+  box-shadow: var(--medical-shadow-sm) !important;
+  transition: none !important;
+}
+
+/* Remove all ant-card-body padding globally */
+.ant-card-body {
+  padding: 0 !important;
+}
+
+/* Ensure medical-card also has no padding */
+.medical-card .ant-card-body {
+  padding: 0 !important;
+}
+
+/* Dashboard stat cards with proper padding */
+.dashboard-stat-card .ant-card-body {
+  padding: 20px !important;
+}
+
+/* Dashboard content cards */
+.dashboard-content-card .ant-card-body {
+  padding: 0 !important;
+}
+
+/* Category page cards */
+.category-card .ant-card-body,
+.product-card .ant-card-body,
+.order-card .ant-card-body,
+.customer-card .ant-card-body,
+.inventory-card .ant-card-body,
+.homepage-card .ant-card-body,
+.blog-card .ant-card-body,
+.contact-card .ant-card-body,
+.googlemap-card .ant-card-body {
+  padding: 0 !important;
+}
+
+/* Add default padding for form-based pages */
+.homepage-card .ant-form,
+.contact-card .ant-form,
+.googlemap-card .ant-form {
+  padding: 20px;
+}
+
+/* Remove card head padding if present */
+.ant-card-head {
+  padding: 0 16px !important;
+  min-height: 48px !important;
+}
+
+/* Optimize card spacing */
+.ant-card {
+  margin-bottom: 16px;
+}
+
+/* Remove unnecessary card borders in some cases */
+.ant-card-bordered {
+  border: 1px solid var(--medical-border-primary);
+}
+
+/* Menu Styles */
+.ant-menu {
+  background: transparent !important;
+}
+
+/* Both modes - white text on dark background */
+.medical-sidebar .ant-menu-item {
+  color: #FFFFFF !important;
+  margin: 4px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Light mode menu items */
+[data-theme="light"] .medical-sidebar .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .medical-sidebar .ant-menu-item-selected {
+  background: rgba(0, 166, 184, 0.2) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  position: relative;
+}
+
+/* Dark mode menu items - slightly brighter hover */
+[data-theme="dark"] .medical-sidebar .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .medical-sidebar .ant-menu-item-selected {
+  background: rgba(38, 198, 218, 0.25) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  position: relative;
+}
+
+.medical-sidebar .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--medical-gradient-primary);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Group titles - white for both modes */
+.medical-sidebar .ant-menu-item-group-title {
+  color: rgba(255, 255, 255, 0.65) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 16px !important;
+  margin-top: 8px !important;
+}
+
+/* Dark mode - slightly brighter group titles */
+[data-theme="dark"] .medical-sidebar .ant-menu-item-group-title {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Icons - white for both modes */
+.medical-sidebar .ant-menu-item .anticon {
+  color: #FFFFFF !important;
+  font-size: 16px !important;
+}
+
+.medical-sidebar .ant-menu-item:hover .anticon {
+  color: #FFFFFF !important;
+}
+
+.medical-sidebar .ant-menu-item-selected .anticon {
+  color: #FFFFFF !important;
+}
+
+/* Button Styles */
+.medical-btn {
+  background: var(--medical-gradient-primary) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 500 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(0, 166, 184, 0.2) !important;
+}
+
+.medical-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 166, 184, 0.3) !important;
+}
+
+/* Primary Button Text Color Fix */
+.ant-btn-primary {
+  color: #FFFFFF !important;
+}
+
+.ant-btn-primary span {
+  color: #FFFFFF !important;
+}
+
+.ant-btn-primary .anticon {
+  color: #FFFFFF !important;
+}
+
+.medical-btn-ghost {
+  background: transparent !important;
+  border: 1px solid var(--medical-primary) !important;
+  color: var(--medical-primary) !important;
+}
+
+.medical-btn-ghost:hover {
+  background: var(--medical-bg-hover) !important;
+  border-color: var(--medical-primary-dark) !important;
+}
+
+/* Avatar Styles */
+.medical-avatar {
+  background: var(--medical-gradient-primary) !important;
+  box-shadow: var(--medical-shadow-md) !important;
+}
+
+/* Badge Styles - No animations, Red background as default */
+.ant-badge-count {
+  background: #FF4444 !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 0 2px var(--medical-bg-primary) !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.ant-badge-count-sm {
+  background: #FF4444 !important;
+  color: #FFFFFF !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Override Ant Design Badge default colors */
+.ant-badge .ant-badge-count {
+  background: #FF4444 !important;
+  color: #FFFFFF !important;
+}
+
+/* Make red Badge the default for all Badge components */
+.ant-badge-status-red .ant-badge-status-dot {
+  background-color: #FF4444 !important;
+}
+
+/* Disable all Badge animations */
+.ant-scroll-number {
+  transition: none !important;
+  animation: none !important;
+}
+
+.ant-scroll-number-only {
+  transition: none !important;
+  animation: none !important;
+}
+
+.ant-scroll-number-only-unit {
+  transition: none !important;
+  animation: none !important;
+}
+
+.ant-badge-zoom-enter,
+.ant-badge-zoom-appear {
+  animation: none !important;
+}
+
+.ant-badge-zoom-leave {
+  animation: none !important;
+}
+
+/* Input Styles */
+.medical-input {
+  background: var(--medical-bg-tertiary) !important;
+  border: 1px solid var(--medical-border-primary) !important;
+  color: var(--medical-text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.medical-input:hover {
+  border-color: var(--medical-primary-light) !important;
+}
+
+.medical-input:focus {
+  border-color: var(--medical-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 166, 184, 0.1) !important;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--medical-bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--medical-primary);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--medical-primary-dark);
+  opacity: 1;
+}
+
+/* Sidebar Scrollbar - both modes */
+.medical-sidebar ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.medical-sidebar ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* Light mode - darker sidebar, light scrollbar */
+[data-theme="light"] .medical-sidebar ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+[data-theme="light"] .medical-sidebar ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Dark mode - lighter sidebar, brighter scrollbar */
+[data-theme="dark"] .medical-sidebar ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+}
+
+[data-theme="dark"] .medical-sidebar ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Ensure menu container is scrollable */
+.medical-sidebar .ant-menu-root {
+  padding-bottom: 20px;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix Ant Design menu overflow */
+.medical-sidebar .ant-menu-inline {
+  border: none !important;
+}
+
+.medical-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Animations */
+@keyframes medical-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 166, 184, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 166, 184, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 166, 184, 0);
+  }
+}
+
+.medical-pulse {
+  animation: medical-pulse 2s infinite;
+}
+
+/* Glassmorphism Effect */
+.medical-glass {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="dark"] .medical-glass {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* POS Launch Button Styles */
+.pos-launch-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.pos-launch-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 166, 184, 0.4) !important;
+  filter: brightness(1.1) !important;
+}
+
+.pos-launch-btn:active {
+  transform: translateY(0) !important;
+}
+
+.pos-launch-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.pos-launch-btn:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip Styles */
+.ant-tooltip-inner {
+  background: var(--medical-bg-tertiary) !important;
+  color: var(--medical-text-primary) !important;
+  box-shadow: var(--medical-shadow-lg) !important;
+}
+
+.ant-tooltip-arrow-content {
+  background: var(--medical-bg-tertiary) !important;
+}
+
+/* Prevent horizontal scroll */
+.ant-table-wrapper {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+}
+
+.ant-table {
+  min-width: 100% !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .medical-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .medical-sidebar.active {
+    transform: translateX(0);
+  }
+}
+
+/* Fix any potential overflow issues */
+.ant-layout {
+  overflow-x: hidden !important;
+}
+
+.ant-layout-content {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+}
+
+/* Medical Tree Styles */
+.medical-tree.ant-tree {
+  font-size: 14px;
+}
+
+.medical-tree .ant-tree-treenode {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  outline: none;
+  margin: 0;
+}
+
+.medical-tree .ant-tree-node-content-wrapper {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.medical-tree .ant-tree-node-content-wrapper:hover {
+  background-color: transparent !important;
+}
+
+/* Tree indentation */
+.medical-tree .ant-tree-indent {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.medical-tree .ant-tree-indent-unit {
+  width: 24px;
+  display: inline-block;
+}
+
+/* Tree lines */
+.medical-tree.ant-tree-show-line .ant-tree-indent-unit {
+  position: relative;
+  height: 100%;
+}
+
+.medical-tree.ant-tree-show-line .ant-tree-indent-unit::before {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  bottom: -4px;
+  border-right: 1px solid rgba(0, 166, 184, 0.3);
+  content: '';
+}
+
+.medical-tree.ant-tree-show-line .ant-tree-treenode:last-child > .ant-tree-indent .ant-tree-indent-unit::before {
+  bottom: auto;
+  height: calc(50% + 4px);
+}
+
+/* Horizontal connecting lines */
+.medical-tree.ant-tree-show-line .ant-tree-switcher-leaf-line::before {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  right: -10px;
+  height: 1px;
+  background: rgba(0, 166, 184, 0.3);
+  content: '';
+}
+
+/* Hide all switcher icons (expand/collapse) */
+.medical-tree .ant-tree-switcher {
+  display: none !important;
+}
+
+.medical-tree .ant-tree-switcher-icon {
+  display: none !important;
+}
+
+.medical-tree .ant-tree-switcher-line-icon {
+  display: none !important;
+}
+
+/* Hide Ant Design's default drag handle icon */
+.medical-tree .ant-tree-draggable-icon {
+  display: none !important;
+}
+
+/* Horizontal line for leaf nodes */
+.medical-tree.ant-tree-show-line .ant-tree-switcher-leaf-line::before {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: -8px;
+  height: 1px;
+  background: rgba(0, 166, 184, 0.2);
+  content: '';
+}
+
+/* Remove default Ant Design tree line styles that cause issues */
+.medical-tree .ant-tree-switcher-leaf-line::after {
+  display: none;
+}
+
+/* Dark mode tree lines */
+[data-theme="dark"] .medical-tree.ant-tree-show-line .ant-tree-indent-unit::before {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .medical-tree.ant-tree-show-line .ant-tree-switcher-leaf-line::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tree node hover effect */
+.medical-tree .category-tree-node:hover {
+  background: var(--medical-bg-hover) !important;
+  border-radius: 8px;
+}
+
+/* Ensure proper spacing */
+.medical-tree .ant-tree-list-holder-inner {
+  padding: 0;
+}
+
+
+.medical-tree .ant-tree-treenode-motion {
+  overflow: hidden;
+}
