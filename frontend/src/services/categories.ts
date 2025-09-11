@@ -34,7 +34,7 @@ class CategoriesService {
   async getCategories(): Promise<Category[]> {
     try {
       const response = await api.get('/categories');
-      return response.data;
+      return response.data.data || [];
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
@@ -45,7 +45,7 @@ class CategoriesService {
   async getCategory(id: string): Promise<Category> {
     try {
       const response = await api.get(`/categories/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching category:', error);
       throw error;
@@ -56,7 +56,7 @@ class CategoriesService {
   async createCategory(data: CreateCategoryDto): Promise<Category> {
     try {
       const response = await api.post('/categories', data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error creating category:', error);
       throw error;
@@ -67,7 +67,7 @@ class CategoriesService {
   async updateCategory(id: string, data: UpdateCategoryDto): Promise<Category> {
     try {
       const response = await api.put(`/categories/${id}`, data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error updating category:', error);
       throw error;

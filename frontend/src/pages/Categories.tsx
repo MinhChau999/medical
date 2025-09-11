@@ -88,150 +88,6 @@ const Categories: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Mock data for fallback (remove this later when API is ready)
-  useEffect(() => {
-    // If API fails or returns empty, use mock data
-    if (!loading && categories.length === 0) {
-      const mockCategories: Category[] = [
-      {
-        id: '1',
-        key: '1',
-        name: 'Thiết bị chẩn đoán',
-        nameEn: 'Diagnostic Equipment',
-        slug: 'diagnostic-equipment',
-        description: 'Các thiết bị chẩn đoán y tế chuyên dụng',
-        parentId: null,
-        image: 'https://via.placeholder.com/150',
-        productCount: 45,
-        status: 'active',
-        order: 1,
-        createdAt: '2024-01-10',
-        updatedAt: '2024-01-10',
-        children: [
-          {
-            id: '2',
-            key: '2',
-            name: 'Máy siêu âm',
-            nameEn: 'Ultrasound Machines',
-            slug: 'ultrasound-machines',
-            description: 'Máy siêu âm các loại',
-            parentId: '1',
-            parentName: 'Thiết bị chẩn đoán',
-            image: 'https://via.placeholder.com/150',
-            productCount: 12,
-            status: 'active',
-            order: 1,
-            createdAt: '2024-01-11',
-            updatedAt: '2024-01-11'
-          },
-          {
-            id: '7',
-            key: '7',
-            name: 'Máy X-Quang',
-            nameEn: 'X-Ray Machines',
-            slug: 'x-ray-machines',
-            description: 'Máy chụp X-Quang',
-            parentId: '1',
-            parentName: 'Thiết bị chẩn đoán',
-            image: 'https://via.placeholder.com/150',
-            productCount: 8,
-            status: 'active',
-            order: 2,
-            createdAt: '2024-01-16',
-            updatedAt: '2024-01-16'
-          }
-        ]
-      },
-      {
-        id: '3',
-        key: '3',
-        name: 'Thiết bị phẫu thuật',
-        nameEn: 'Surgical Equipment',
-        slug: 'surgical-equipment',
-        description: 'Dụng cụ và thiết bị phẫu thuật',
-        parentId: null,
-        image: 'https://via.placeholder.com/150',
-        productCount: 78,
-        status: 'active',
-        order: 2,
-        createdAt: '2024-01-12',
-        updatedAt: '2024-01-12',
-        children: [
-          {
-            id: '8',
-            key: '8',
-            name: 'Dao mổ',
-            nameEn: 'Surgical Knives',
-            slug: 'surgical-knives',
-            description: 'Các loại dao mổ phẫu thuật',
-            parentId: '3',
-            parentName: 'Thiết bị phẫu thuật',
-            image: 'https://via.placeholder.com/150',
-            productCount: 25,
-            status: 'active',
-            order: 1,
-            createdAt: '2024-01-17',
-            updatedAt: '2024-01-17'
-          }
-        ]
-      },
-      {
-        id: '4',
-        key: '4',
-        name: 'Thiết bị theo dõi',
-        nameEn: 'Monitoring Equipment',
-        slug: 'monitoring-equipment',
-        description: 'Thiết bị theo dõi bệnh nhân',
-        parentId: null,
-        image: 'https://via.placeholder.com/150',
-        productCount: 34,
-        status: 'active',
-        order: 3,
-        createdAt: '2024-01-13',
-        updatedAt: '2024-01-13'
-      },
-      {
-        id: '5',
-        key: '5',
-        name: 'Vật tư tiêu hao',
-        nameEn: 'Consumables',
-        slug: 'consumables',
-        description: 'Vật tư y tế tiêu hao',
-        parentId: null,
-        image: 'https://via.placeholder.com/150',
-        productCount: 156,
-        status: 'active',
-        order: 4,
-        createdAt: '2024-01-14',
-        updatedAt: '2024-01-14'
-      },
-      {
-        id: '6',
-        key: '6',
-        name: 'Thiết bị xét nghiệm',
-        nameEn: 'Laboratory Equipment',
-        slug: 'laboratory-equipment',
-        description: 'Thiết bị xét nghiệm và phân tích',
-        parentId: null,
-        image: 'https://via.placeholder.com/150',
-        productCount: 89,
-        status: 'active',
-        order: 5,
-        createdAt: '2024-01-15',
-        updatedAt: '2024-01-15'
-      }
-      ];
-      const categoriesWithKeys = mockCategories.map(cat => ({
-        ...cat,
-        key: cat.id
-      }));
-      setCategories(categoriesWithKeys);
-      // Mở rộng tất cả categories có children
-      const keys = categoriesWithKeys.filter(cat => cat.children && cat.children.length > 0).map(cat => cat.key);
-      setExpandedKeys(keys);
-    }
-  }, [loading, categories.length]);
-
   const handleSearch = (value: string) => {
     setSearchText(value);
   };
@@ -408,7 +264,7 @@ const Categories: React.FC = () => {
     }));
   };
 
-  const onDrop: TreeProps['onDrop'] = (info) => {
+  const onDrop: TreeProps['onDrop'] = async (info) => {
     const dropKey = info.node.key;
     const dragKey = info.dragNode.key;
     const dropPos = info.node.pos.split('-');
@@ -438,11 +294,13 @@ const Categories: React.FC = () => {
       dragObj = item;
     });
 
+    let newParentId: string | null = null;
     if (!info.dropToGap) {
       // Drop on the content
       loop(data, dropKey, item => {
         item.children = item.children || [];
         item.children.unshift(dragObj);
+        newParentId = item.id;
       });
     } else if (
       ((info.node as any).props.children || []).length > 0 &&
@@ -452,6 +310,7 @@ const Categories: React.FC = () => {
       loop(data, dropKey, item => {
         item.children = item.children || [];
         item.children.unshift(dragObj);
+        newParentId = item.id;
       });
     } else {
       let ar: Category[] = [];
@@ -466,8 +325,53 @@ const Categories: React.FC = () => {
         ar.splice(i! + 1, 0, dragObj!);
       }
     }
+    
+    // Update local state immediately for better UX
     setCategories(data);
-    message.success('Đã cập nhật thứ tự danh mục');
+    
+    // Prepare categories order data
+    const categoriesOrder: { id: string; parentId?: string | null; order: number }[] = [];
+    
+    const collectOrder = (items: Category[], parentId: string | null = null) => {
+      items.forEach((item, index) => {
+        categoriesOrder.push({
+          id: item.id,
+          parentId: parentId,
+          order: index
+        });
+        if (item.children && item.children.length > 0) {
+          collectOrder(item.children, item.id);
+        }
+      });
+    };
+    
+    collectOrder(data);
+    
+    try {
+      // Save to backend
+      await categoriesService.updateCategoriesOrder(categoriesOrder);
+      message.success('Đã cập nhật thứ tự danh mục');
+      
+      // Save current expanded keys
+      const currentExpandedKeys = [...expandedKeys];
+      // Add the drop target to expanded keys if it's a parent
+      if (!info.dropToGap || (((info.node as any).props.children || []).length > 0 && (info.node as any).props.expanded && dropPosition === 1)) {
+        if (!currentExpandedKeys.includes(dropKey)) {
+          currentExpandedKeys.push(dropKey);
+        }
+      }
+      
+      // Reload data from backend to ensure consistency
+      await fetchCategories();
+      
+      // Restore expanded keys
+      setExpandedKeys(currentExpandedKeys);
+      setAutoExpandParent(false);
+    } catch (error) {
+      message.error('Lỗi khi cập nhật thứ tự danh mục');
+      // Revert on error
+      fetchCategories();
+    }
   };
 
   const onExpand = (expandedKeysValue: React.Key[]) => {
@@ -640,135 +544,137 @@ const Categories: React.FC = () => {
         </Form>
       </Modal>
 
-      <style jsx>{`
-        .category-tree-node:hover {
-          background: ${isDarkMode ? 'rgba(0, 166, 184, 0.1)' : 'rgba(0, 166, 184, 0.05)'} !important;
-        }
-        
-        .draggable-tree .ant-tree-node-content-wrapper {
-          width: 100%;
-        }
-        
-        .draggable-tree .ant-tree-treenode {
-          width: 100%;
-        }
-        
-        .draggable-tree .ant-tree-node-content-wrapper:hover {
-          background: transparent !important;
-        }
-        
-        .draggable-tree .ant-tree-node-selected .category-tree-node {
-          background: ${isDarkMode ? 'rgba(0, 166, 184, 0.15)' : 'rgba(0, 166, 184, 0.08)'} !important;
-        }
-        
-        .draggable-tree .ant-tree-switcher {
-          color: #00A6B8;
-        }
-        
-        .ant-tree-draggable-icon {
-          visibility: hidden;
-        }
-        
-        /* Fix tree line alignment */
-        .medical-tree .ant-tree-indent {
-          align-self: stretch;
-          white-space: nowrap;
-          user-select: none;
-        }
-        
-        .medical-tree .ant-tree-indent-unit {
-          display: inline-block;
-          width: 24px;
-        }
-        
-        .medical-tree .ant-tree-switcher {
-          position: relative;
-          flex: none;
-          align-self: stretch;
-          width: 24px;
-          margin: 0;
-          text-align: center;
-          cursor: pointer;
-          user-select: none;
-        }
-        
-        .medical-tree .ant-tree-switcher-leaf-line {
-          position: relative;
-          z-index: 1;
-          display: inline-block;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .medical-tree .ant-tree-switcher-leaf-line::before {
-          position: absolute;
-          top: 0;
-          right: 12px;
-          bottom: -4px;
-          margin-left: -1px;
-          border-right: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
-          content: ' ';
-        }
-        
-        .medical-tree .ant-tree-switcher-leaf-line::after {
-          position: absolute;
-          width: 10px;
-          height: 14px;
-          border-bottom: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
-          content: ' ';
-          top: 50%;
-          right: 12px;
-          transform: translateY(-50%);
-        }
-        
-        .medical-tree .ant-tree-treenode-leaf-last .ant-tree-switcher-leaf-line::before {
-          bottom: auto;
-          height: 14px;
-          top: auto;
-          bottom: 50%;
-        }
-        
-        /* Tree line styles */
-        .medical-tree.ant-tree-show-line .ant-tree-indent-unit::before {
-          position: absolute;
-          top: 0;
-          right: 12px;
-          bottom: -4px;
-          border-right: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
-          content: '';
-        }
-        
-        .medical-tree.ant-tree-show-line .ant-tree-indent-unit-end::before {
-          display: none;
-        }
-        
-        /* Tree node alignment */
-        .medical-tree .ant-tree-node-content-wrapper {
-          position: relative;
-          z-index: 1;
-          min-height: 24px;
-          margin: 0;
-          padding: 0;
-          background: transparent;
-          border-radius: 2px;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-        
-        .medical-tree .ant-tree-title {
-          width: 100%;
-        }
-        
-        /* Icon alignment */
-        .medical-tree .ant-tree-iconEle {
-          display: inline-block;
-          width: 24px;
-          height: 24px;
-          line-height: 24px;
-          text-align: center;
-          vertical-align: middle;
-        }
-      `}</style>
+      <style>
+        {`
+          .category-tree-node:hover {
+            background: ${isDarkMode ? 'rgba(0, 166, 184, 0.1)' : 'rgba(0, 166, 184, 0.05)'} !important;
+          }
+          
+          .draggable-tree .ant-tree-node-content-wrapper {
+            width: 100%;
+          }
+          
+          .draggable-tree .ant-tree-treenode {
+            width: 100%;
+          }
+          
+          .draggable-tree .ant-tree-node-content-wrapper:hover {
+            background: transparent !important;
+          }
+          
+          .draggable-tree .ant-tree-node-selected .category-tree-node {
+            background: ${isDarkMode ? 'rgba(0, 166, 184, 0.15)' : 'rgba(0, 166, 184, 0.08)'} !important;
+          }
+          
+          .draggable-tree .ant-tree-switcher {
+            color: #00A6B8;
+          }
+          
+          .ant-tree-draggable-icon {
+            visibility: hidden;
+          }
+          
+          /* Fix tree line alignment */
+          .medical-tree .ant-tree-indent {
+            align-self: stretch;
+            white-space: nowrap;
+            user-select: none;
+          }
+          
+          .medical-tree .ant-tree-indent-unit {
+            display: inline-block;
+            width: 24px;
+          }
+          
+          .medical-tree .ant-tree-switcher {
+            position: relative;
+            flex: none;
+            align-self: stretch;
+            width: 24px;
+            margin: 0;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+          }
+          
+          .medical-tree .ant-tree-switcher-leaf-line {
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+          }
+          
+          .medical-tree .ant-tree-switcher-leaf-line::before {
+            position: absolute;
+            top: 0;
+            right: 12px;
+            bottom: -4px;
+            margin-left: -1px;
+            border-right: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
+            content: ' ';
+          }
+          
+          .medical-tree .ant-tree-switcher-leaf-line::after {
+            position: absolute;
+            width: 10px;
+            height: 14px;
+            border-bottom: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
+            content: ' ';
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+          }
+          
+          .medical-tree .ant-tree-treenode-leaf-last .ant-tree-switcher-leaf-line::before {
+            bottom: auto;
+            height: 14px;
+            top: auto;
+            bottom: 50%;
+          }
+          
+          /* Tree line styles */
+          .medical-tree.ant-tree-show-line .ant-tree-indent-unit::before {
+            position: absolute;
+            top: 0;
+            right: 12px;
+            bottom: -4px;
+            border-right: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
+            content: '';
+          }
+          
+          .medical-tree.ant-tree-show-line .ant-tree-indent-unit-end::before {
+            display: none;
+          }
+          
+          /* Tree node alignment */
+          .medical-tree .ant-tree-node-content-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 24px;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+          }
+          
+          .medical-tree .ant-tree-title {
+            width: 100%;
+          }
+          
+          /* Icon alignment */
+          .medical-tree .ant-tree-iconEle {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            vertical-align: middle;
+          }
+        `}
+      </style>
     </div>
   );
 };

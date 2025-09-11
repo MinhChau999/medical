@@ -24,7 +24,9 @@
       "Bash(lsof:*)",
       "mcp__serena__search_for_pattern",
       "mcp__serena__list_memories",
-      "mcp__serena__replace_symbol_body"
+      "mcp__serena__replace_symbol_body",
+      "Bash(open http://localhost:5173/dashboard/products)",
+      "mcp__serena__find_file"
     ],
     "deny": [],
     "ask": []

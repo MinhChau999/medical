@@ -10,13 +10,15 @@ import { generalLimiter, authLimiter } from './middleware/rateLimiter';
 import { sanitizeInput } from './middleware/validation';
 // import { setupSwagger } from './config/swagger';
 import authRoutes from './routes/auth.routes';
-import productRoutes from './routes/product.routes';
+// import productRoutes from './routes/product.routes';
+import productRoutes from './routes/products-mock.routes';
 import orderRoutes from './routes/order.routes';
 import customerRoutes from './routes/customer.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import paymentRoutes from './routes/payment.routes';
-// import uploadRoutes from './routes/upload.routes';
+import categoriesRoutes from './routes/categories.routes';
+import uploadRoutes from './routes/upload.routes';
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -72,13 +74,14 @@ if (process.env.NODE_ENV === 'production') {
 
 // Auth routes
 app.use(`/api/${API_VERSION}/auth`, authRoutes);
+app.use(`/api/${API_VERSION}/categories`, categoriesRoutes);
 app.use(`/api/${API_VERSION}/products`, productRoutes);
 app.use(`/api/${API_VERSION}/orders`, orderRoutes);
 app.use(`/api/${API_VERSION}/customers`, customerRoutes);
 app.use(`/api/${API_VERSION}/inventory`, inventoryRoutes);
 app.use(`/api/${API_VERSION}/analytics`, analyticsRoutes);
 app.use(`/api/${API_VERSION}/payment`, paymentRoutes);
-// app.use(`/api/${API_VERSION}/upload`, uploadRoutes);
+app.use(`/api/${API_VERSION}/upload`, uploadRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

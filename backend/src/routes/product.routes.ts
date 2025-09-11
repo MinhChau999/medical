@@ -1,47 +1,27 @@
 import { Router } from 'express';
-import { ProductController } from '../controllers/product.controller';
 import { authenticate, authorize } from '../middleware/auth';
+import { ProductsController } from '../controllers/products.controller';
 
 const router = Router();
 
-router.get(
-  '/',
-  ProductController.validateGetProducts,
-  ProductController.getProducts
-);
+// Public routes
+router.get('/', ProductsController.getProducts);
+router.get('/stats', ProductsController.getProductStats);
+router.get('/low-stock', ProductsController.getLowStockProducts);
+router.get('/barcode/:barcode', ProductsController.getProductByBarcode);
+router.get('/:id', ProductsController.getProduct);
 
-router.get('/search', ProductController.searchProducts);
+// Protected routes
+router.use(authenticate);
 
-router.get('/:id', ProductController.getProductById);
+// Admin and Manager routes
+router.post('/', authorize(['admin', 'manager']), ProductsController.createProduct);
+router.put('/:id', authorize(['admin', 'manager']), ProductsController.updateProduct);
+router.patch('/:id/stock', authorize(['admin', 'manager', 'staff']), ProductsController.updateStock);
+router.delete('/:id', authorize(['admin']), ProductsController.deleteProduct);
 
-router.post(
-  '/',
-  authenticate,
-  authorize('admin', 'manager'),
-  ProductController.validateCreateProduct,
-  ProductController.createProduct
-);
-
-router.put(
-  '/:id',
-  authenticate,
-  authorize('admin', 'manager'),
-  ProductController.validateUpdateProduct,
-  ProductController.updateProduct
-);
-
-router.delete(
-  '/:id',
-  authenticate,
-  authorize('admin'),
-  ProductController.deleteProduct
-);
-
-router.post(
-  '/:id/variants',
-  authenticate,
-  authorize('admin', 'manager'),
-  ProductController.createProductVariant
-);
+// Bulk operations
+router.post('/bulk-update', authorize(['admin', 'manager']), ProductsController.bulkUpdateProducts);
+router.post('/bulk-delete', authorize(['admin']), ProductsController.bulkDeleteProducts);
 
 export default router;
