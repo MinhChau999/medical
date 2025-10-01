@@ -59,7 +59,7 @@ router.post('/avatar', authenticate, upload.single('avatar'), async (req, res) =
 });
 
 // Upload single product image
-router.post('/product', authenticate, authorize(['admin', 'manager', 'staff']), upload.single('image'), async (req, res) => {
+router.post('/product', authenticate, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -87,7 +87,7 @@ router.post('/product', authenticate, authorize(['admin', 'manager', 'staff']), 
 });
 
 // Upload multiple product images
-router.post('/products', authenticate, authorize(['admin', 'manager', 'staff']), upload.array('images', 10), async (req, res) => {
+router.post('/products', authenticate, upload.array('images', 10), async (req, res) => {
   try {
     const files = req.files as Express.Multer.File[];
     

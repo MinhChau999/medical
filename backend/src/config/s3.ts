@@ -1,18 +1,21 @@
 import { S3Client } from '@aws-sdk/client-s3';
 
 export const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'auto',
+  endpoint: process.env.AWS_ENDPOINT || undefined,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
+  forcePathStyle: true, // Required for S3-compatible services
 });
 
-export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'medical-app-images';
+export const S3_BUCKET_NAME = process.env.AWS_S3_BUCKET || 'medical';
 
 export const S3_CONFIG = {
   bucket: S3_BUCKET_NAME,
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'auto',
+  endpoint: process.env.AWS_ENDPOINT,
   maxFileSize: 10 * 1024 * 1024, // 10MB
   allowedMimeTypes: [
     'image/jpeg',

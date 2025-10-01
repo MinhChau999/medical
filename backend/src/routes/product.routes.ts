@@ -1,27 +1,27 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
-import { ProductsController } from '../controllers/products.controller';
+import { ProductsRawController } from '../controllers/products-raw.controller';
 
 const router = Router();
 
 // Public routes
-router.get('/', ProductsController.getProducts);
-router.get('/stats', ProductsController.getProductStats);
-router.get('/low-stock', ProductsController.getLowStockProducts);
-router.get('/barcode/:barcode', ProductsController.getProductByBarcode);
-router.get('/:id', ProductsController.getProduct);
+router.get('/', ProductsRawController.getProducts);
+router.get('/stats', ProductsRawController.getProductStats);
+router.get('/low-stock', ProductsRawController.getLowStockProducts);
+router.get('/barcode/:barcode', ProductsRawController.getProductByBarcode);
+router.get('/:id', ProductsRawController.getProduct);
 
 // Protected routes
 router.use(authenticate);
 
 // Admin and Manager routes
-router.post('/', authorize(['admin', 'manager']), ProductsController.createProduct);
-router.put('/:id', authorize(['admin', 'manager']), ProductsController.updateProduct);
-router.patch('/:id/stock', authorize(['admin', 'manager', 'staff']), ProductsController.updateStock);
-router.delete('/:id', authorize(['admin']), ProductsController.deleteProduct);
+router.post('/', authorize(['admin', 'manager']), ProductsRawController.createProduct);
+router.put('/:id', authorize(['admin', 'manager']), ProductsRawController.updateProduct);
+router.patch('/:id/stock', authorize(['admin', 'manager', 'staff']), ProductsRawController.updateStock);
+router.delete('/:id', authorize(['admin']), ProductsRawController.deleteProduct);
 
 // Bulk operations
-router.post('/bulk-update', authorize(['admin', 'manager']), ProductsController.bulkUpdateProducts);
-router.post('/bulk-delete', authorize(['admin']), ProductsController.bulkDeleteProducts);
+router.post('/bulk-update', authorize(['admin', 'manager']), ProductsRawController.bulkUpdateProducts);
+router.post('/bulk-delete', authorize(['admin']), ProductsRawController.bulkDeleteProducts);
 
 export default router;

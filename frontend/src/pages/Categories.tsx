@@ -77,7 +77,7 @@ const Categories: React.FC = () => {
       const keys = categoriesWithKeys.filter(cat => cat.children && cat.children.length > 0).map(cat => cat.key);
       setExpandedKeys(keys);
     } catch (error) {
-      message.error(t('failedToLoadCategories'));
+      message.error('Failed to load categories');
       console.error('Failed to fetch categories:', error);
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ const Categories: React.FC = () => {
       // Refresh categories list
       await fetchCategories();
     } catch (error: any) {
-      message.error(error.response?.data?.message || t('failedToDeleteCategory'));
+      message.error(error.response?.data?.message || 'Failed to delete category');
       console.error('Failed to delete category:', error);
     }
   };
@@ -133,7 +133,7 @@ const Categories: React.FC = () => {
       // Refresh categories list
       await fetchCategories();
     } catch (error: any) {
-      message.error(error.response?.data?.message || t('failedToSaveCategory'));
+      message.error(error.response?.data?.message || 'Failed to save category');
       console.error('Failed to save category:', error);
     } finally {
       setSubmitting(false);
@@ -144,8 +144,10 @@ const Categories: React.FC = () => {
   const convertToTreeData = (items: Category[]): TreeDataNode[] => {
     // Sort by order first, then by name
     const sortedItems = [...items].sort((a, b) => {
-      if (a.order !== b.order) {
-        return a.order - b.order;
+      const orderA = a.order || 0;
+      const orderB = b.order || 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
       }
       return a.name.localeCompare(b.name);
     });
@@ -205,7 +207,7 @@ const Categories: React.FC = () => {
                 fontWeight: 600,
                 color: '#00A6B8'
               }}>
-                {item.productCount}
+                {item.productCount || 0}
               </span>
               <span style={{ 
                 fontSize: 12, 
@@ -434,7 +436,7 @@ const Categories: React.FC = () => {
           padding: 12,
           minHeight: 400,
         }}>
-          <Spin spinning={loading} tip={t('loadingCategories')}>
+          <Spin spinning={loading} tip="Loading categories...">
           <Tree
             className="medical-tree"
             draggable

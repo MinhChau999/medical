@@ -54,17 +54,19 @@ export class UploadService {
       
       await Promise.all(uploadPromises);
 
-      // Build response with URLs
+      // Build response with public URLs for S3 Cloud Vietnam
       const variantUrls: any = {};
       for (const variant of variants) {
         const type = variant.key.split('/')[1]; // Get type from path
-        variantUrls[type] = await this.getSignedUrl(variant.key);
+        variantUrls[type] = this.getPublicUrl(variant.key);
       }
 
+      const originalVariant = variants.find(v => v.key.includes('original'));
+
       return {
-        key: `products/original/${Date.now()}-${baseKey}.webp`,
+        key: originalVariant?.key || `products/original/${Date.now()}-${baseKey}.webp`,
         url: variantUrls.original,
-        size: variants.find(v => v.key.includes('original'))?.size || 0,
+        size: originalVariant?.size || 0,
         contentType: 'image/webp',
         variants: {
           thumbnail: variantUrls.thumbnails,
@@ -127,6 +129,22 @@ export class UploadService {
     });
 
     await Promise.all(deletePromises);
+  }
+
+  /**
+   * Get public URL for S3 Cloud Vietnam objects
+   */
+  static getPublicUrl(key: string): string {
+    const endpoint = process.env.AWS_ENDPOINT;
+    const bucket = S3_BUCKET_NAME;
+
+    if (endpoint) {
+      // For S3 Cloud Vietnam, construct public URL
+      return `${endpoint}/${bucket}/${key}`;
+    }
+
+    // Fallback for standard AWS S3
+    return `https://${bucket}.s3.amazonaws.com/${key}`;
   }
 
   /**

@@ -21,6 +21,7 @@ export class UploadController {
 
       res.json({
         success: true,
+        url: result.url,
         data: result
       });
     } catch (error) {

@@ -10,18 +10,23 @@ import { generalLimiter, authLimiter } from './middleware/rateLimiter';
 import { sanitizeInput } from './middleware/validation';
 // import { setupSwagger } from './config/swagger';
 import authRoutes from './routes/auth.routes';
-// import productRoutes from './routes/product.routes';
-import productRoutes from './routes/products-mock.routes';
+import productRoutes from './routes/product.routes';
+// import productRoutes from './routes/products-mock.routes';
 import orderRoutes from './routes/order.routes';
 import customerRoutes from './routes/customer.routes';
 import inventoryRoutes from './routes/inventory.routes';
+import warehouseRoutes from './routes/warehouse.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import paymentRoutes from './routes/payment.routes';
 import categoriesRoutes from './routes/categories.routes';
 import uploadRoutes from './routes/upload.routes';
+import { initializeModels } from './models';
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+// Initialize Sequelize models
+initializeModels();
 
 const app: Express = express();
 const PORT = process.env.BACKEND_PORT || 3000;
@@ -79,6 +84,7 @@ app.use(`/api/${API_VERSION}/products`, productRoutes);
 app.use(`/api/${API_VERSION}/orders`, orderRoutes);
 app.use(`/api/${API_VERSION}/customers`, customerRoutes);
 app.use(`/api/${API_VERSION}/inventory`, inventoryRoutes);
+app.use(`/api/${API_VERSION}/warehouses`, warehouseRoutes);
 app.use(`/api/${API_VERSION}/analytics`, analyticsRoutes);
 app.use(`/api/${API_VERSION}/payment`, paymentRoutes);
 app.use(`/api/${API_VERSION}/upload`, uploadRoutes);
@@ -110,12 +116,28 @@ const server = app.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);
   logger.info(`API Version: ${API_VERSION}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
+}).on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    logger.error(`Port ${PORT} is already in use. Please stop other instances or use a different port.`);
+    process.exit(1);
+  } else {
+    logger.error('Server error:', err);
+    throw err;
+  }
 });
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
   server.close(() => {
     logger.info('HTTP server closed');
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
   });
 });
 

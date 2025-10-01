@@ -15,6 +15,9 @@ build/
 */build/
 *.local
 
+.claude
+.serena
+
 # Environment variables
 .env
 .env.*

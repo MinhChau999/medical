@@ -14,6 +14,7 @@ export interface Product {
   unit?: string;
   status: 'active' | 'inactive';
   images?: string[];
+  image?: string;
   brand?: string;
   barcode?: string;
   manufacturer?: string;
