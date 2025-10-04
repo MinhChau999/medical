@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Space, Row, Col, Upload, message, Tabs, Select, ColorPicker, Switch, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, Button, Space, Row, Col, Upload, message, Tabs, Switch, Divider } from 'antd';
 import { UploadOutlined, SaveOutlined, EyeOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import type { UploadFile } from 'antd/es/upload/interface';
+import homepageService, { HomepageSettings } from '@/services/homepage';
 
 const { TextArea } = Input;
 
@@ -11,21 +12,89 @@ const Homepage: React.FC = () => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [heroImages, setHeroImages] = useState<UploadFile[]>([]);
-  const [features, setFeatures] = useState([
+  const [features, setFeatures] = useState<Array<{
+    id: number;
+    icon: string;
+    title: string;
+    description: string;
+  }>>([
     { id: 1, icon: '🔬', title: 'Thiết bị chẩn đoán', description: 'Công nghệ tiên tiến' },
     { id: 2, icon: '⚕️', title: 'Dụng cụ phẫu thuật', description: 'Chất lượng cao' },
     { id: 3, icon: '💊', title: 'Vật tư y tế', description: 'Đa dạng sản phẩm' },
   ]);
 
+  // Fetch homepage settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setFetchLoading(true);
+      const settings = await homepageService.getSettings();
+
+      // Set form values
+      form.setFieldsValue({
+        heroTitle: settings.heroTitle,
+        heroSubtitle: settings.heroSubtitle,
+        heroButtonText: settings.heroButtonText,
+        heroButtonLink: settings.heroButtonLink,
+        aboutTitle: settings.aboutTitle,
+        aboutContent: settings.aboutContent,
+        yearsExperience: settings.yearsExperience,
+        happyCustomers: settings.happyCustomers,
+        productsCount: settings.productsCount,
+        metaTitle: settings.metaTitle,
+        metaDescription: settings.metaDescription,
+        metaKeywords: settings.metaKeywords,
+        showPromoBanner: settings.showPromoBanner,
+        promoBannerText: settings.promoBannerText,
+        showNewsletter: settings.showNewsletter,
+        newsletterTitle: settings.newsletterTitle,
+        primaryColor: settings.primaryColor,
+        secondaryColor: settings.secondaryColor,
+      });
+
+      // Set features
+      if (settings.features && Array.isArray(settings.features)) {
+        setFeatures(settings.features as any);
+      }
+
+      // Set hero images
+      if (settings.heroImages && Array.isArray(settings.heroImages)) {
+        setHeroImages(
+          settings.heroImages.map((url, index) => ({
+            uid: `${index}`,
+            name: `image-${index}`,
+            status: 'done',
+            url,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching homepage settings:', error);
+      message.error('Không thể tải cài đặt trang chủ');
+    } finally {
+      setFetchLoading(false);
+    }
+  };
+
   const handleSave = async (values: any) => {
     setLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updateData: Partial<HomepageSettings> = {
+        ...values,
+        features,
+        heroImages: heroImages.map(file => file.url || file.response?.url || '').filter(Boolean),
+      };
+
+      await homepageService.updateSettings(updateData);
       message.success('Cập nhật trang chủ thành công!');
     } catch (error) {
-      message.error('Có lỗi xảy ra!');
+      console.error('Error updating homepage settings:', error);
+      message.error('Có lỗi xảy ra khi cập nhật!');
     } finally {
       setLoading(false);
     }
@@ -45,10 +114,40 @@ const Homepage: React.FC = () => {
   };
 
   const updateFeature = (id: number, field: string, value: string) => {
-    setFeatures(features.map(f => 
+    setFeatures(features.map(f =>
       f.id === id ? { ...f, [field]: value } : f
     ));
   };
+
+  const handlePreview = () => {
+    window.open('/', '_blank');
+  };
+
+  const handleImageUpload = async (options: any) => {
+    const { file, onSuccess, onError } = options;
+
+    try {
+      // Upload to server
+      const urls = await homepageService.uploadHeroImages([file]);
+
+      if (urls && urls.length > 0) {
+        onSuccess({ url: urls[0] }, file);
+        message.success('Tải ảnh lên thành công!');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      onError(error);
+      message.error('Lỗi khi tải ảnh lên!');
+    }
+  };
+
+  if (fetchLoading) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <Card loading={true}>Đang tải...</Card>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24 }}>
@@ -57,16 +156,17 @@ const Homepage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="homepage-card" 
+        <Card
+          className="homepage-card"
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Quản lý Trang chủ</span>
               <Space>
-                <Button icon={<EyeOutlined />}>
+                <Button icon={<EyeOutlined />} onClick={handlePreview}>
                   Xem trước
                 </Button>
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<SaveOutlined />}
                   loading={loading}
                   onClick={() => form.submit()}
@@ -85,13 +185,6 @@ const Homepage: React.FC = () => {
             form={form}
             layout="vertical"
             onFinish={handleSave}
-            initialValues={{
-              heroTitle: 'Medical Electronics - Thiết bị Y tế Chất lượng Cao',
-              heroSubtitle: 'Nhà cung cấp thiết bị y tế hàng đầu Việt Nam',
-              heroButtonText: 'Khám phá ngay',
-              aboutTitle: 'Về chúng tôi',
-              aboutContent: 'Medical Electronics là đơn vị tiên phong trong lĩnh vực cung cấp thiết bị y tế chất lượng cao...',
-            }}
           >
             <Tabs defaultActiveKey="1">
               <Tabs.TabPane tab="Hero Section" key="1">
@@ -139,7 +232,7 @@ const Homepage: React.FC = () => {
                     listType="picture-card"
                     fileList={heroImages}
                     onChange={({ fileList }) => setHeroImages(fileList)}
-                    beforeUpload={() => false}
+                    customRequest={handleImageUpload}
                   >
                     {heroImages.length < 3 && (
                       <div>
@@ -156,8 +249,8 @@ const Homepage: React.FC = () => {
 
               <Tabs.TabPane tab="Tính năng nổi bật" key="2">
                 <div style={{ marginBottom: 16 }}>
-                  <Button 
-                    type="dashed" 
+                  <Button
+                    type="dashed"
                     icon={<PlusOutlined />}
                     onClick={addFeature}
                     style={{ width: '100%' }}
@@ -166,15 +259,15 @@ const Homepage: React.FC = () => {
                   </Button>
                 </div>
 
-                {features.map((feature, index) => (
-                  <Card 
+                {features.map((feature) => (
+                  <Card
                     key={feature.id}
-                    size="small" 
+                    size="small"
                     style={{ marginBottom: 16 }}
                     extra={
-                      <Button 
-                        type="text" 
-                        danger 
+                      <Button
+                        type="text"
+                        danger
                         icon={<DeleteOutlined />}
                         onClick={() => removeFeature(feature.id)}
                       />
@@ -220,8 +313,8 @@ const Homepage: React.FC = () => {
                   name="aboutContent"
                   label="Nội dung"
                 >
-                  <TextArea 
-                    rows={6} 
+                  <TextArea
+                    rows={6}
                     placeholder="Nhập nội dung giới thiệu..."
                   />
                 </Form.Item>
@@ -268,7 +361,7 @@ const Homepage: React.FC = () => {
                   label="Meta Description"
                   rules={[{ max: 160, message: 'Tối đa 160 ký tự' }]}
                 >
-                  <TextArea 
+                  <TextArea
                     rows={3}
                     placeholder="Nhà cung cấp thiết bị y tế chất lượng cao..."
                     showCount
@@ -286,20 +379,14 @@ const Homepage: React.FC = () => {
                 <Divider />
 
                 <Form.Item
-                  name="ogImage"
-                  label="Open Graph Image"
+                  name="ogImageUrl"
+                  label="Open Graph Image URL"
                 >
-                  <Upload
-                    listType="picture"
-                    maxCount={1}
-                    beforeUpload={() => false}
-                  >
-                    <Button icon={<UploadOutlined />}>Tải lên OG Image</Button>
-                  </Upload>
-                  <div style={{ color: '#999', fontSize: 12, marginTop: 8 }}>
-                    Khuyến nghị: 1200x630px
-                  </div>
+                  <Input placeholder="https://example.com/og-image.jpg" />
                 </Form.Item>
+                <div style={{ color: '#999', fontSize: 12, marginTop: -16, marginBottom: 16 }}>
+                  Khuyến nghị: 1200x630px
+                </div>
               </Tabs.TabPane>
 
               <Tabs.TabPane tab="Cài đặt khác" key="5">

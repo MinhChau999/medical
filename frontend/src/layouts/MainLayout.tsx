@@ -22,7 +22,6 @@ import {
   GithubOutlined,
   DatabaseOutlined,
   ApiOutlined,
-  CloudServerOutlined,
   SafetyOutlined,
   FileTextOutlined,
   SunOutlined,
@@ -48,9 +47,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, logout } = useAuthStore();
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleTheme } = useThemeStore();
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  const { token } = theme.useToken();
+  const { colorBgContainer, borderRadiusLG } = token;
 
   useEffect(() => {
     // Apply theme class to body
@@ -163,14 +161,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           label: t('database'),
         },
         {
-          key: '/dashboard/api',
+          key: '/dashboard/api-status',
           icon: <ApiOutlined />,
           label: t('apiStatus'),
-        },
-        {
-          key: '/dashboard/server',
-          icon: <CloudServerOutlined />,
-          label: t('server'),
         },
         {
           key: '/dashboard/security',

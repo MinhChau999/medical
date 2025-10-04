@@ -400,16 +400,16 @@ const Dashboard: React.FC = () => {
       </Row>
 
       {/* CSS for POS Button Effects */}
-      <style jsx>{`
+      <style>{`
         .pos-launch-btn:hover .shine-effect {
           left: 100% !important;
         }
-        
+
         .pos-launch-btn {
           position: relative;
           transform-style: preserve-3d;
         }
-        
+
         .pos-launch-btn::before {
           content: '';
           position: absolute;
@@ -423,11 +423,11 @@ const Dashboard: React.FC = () => {
           transition: opacity 0.3s ease;
           z-index: 1;
         }
-        
+
         .pos-launch-btn:hover::before {
           opacity: 1;
         }
-        
+
         .pos-launch-btn:active {
           transform: translateY(1px) !important;
         }

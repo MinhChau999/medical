@@ -5,13 +5,28 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
+// Validate required environment variables
+const requiredEnvVars = [
+  'DATABASE_HOST',
+  'DATABASE_PORT',
+  'DATABASE_NAME',
+  'DATABASE_USER',
+  'DATABASE_PASSWORD'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    throw new Error(`Missing required environment variable: ${envVar}`);
+  }
+}
+
 // Sequelize instance for ORM
 export const sequelize = new Sequelize({
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432'),
-  database: process.env.DATABASE_NAME || 'medical',
-  username: process.env.DATABASE_USER || 'dobby',
-  password: process.env.DATABASE_PASSWORD || 'root@123',
+  host: process.env.DATABASE_HOST!,
+  port: parseInt(process.env.DATABASE_PORT!),
+  database: process.env.DATABASE_NAME!,
+  username: process.env.DATABASE_USER!,
+  password: process.env.DATABASE_PASSWORD!,
   dialect: 'postgres',
   pool: {
     min: parseInt(process.env.DATABASE_POOL_MIN || '2'),
@@ -24,11 +39,11 @@ export const sequelize = new Sequelize({
 
 // Pool instance for raw queries (backward compatibility)
 const pool = new Pool({
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT || '5432'),
-  database: process.env.DATABASE_NAME || 'medical',
-  user: process.env.DATABASE_USER || 'dobby',
-  password: process.env.DATABASE_PASSWORD || 'root@123',
+  host: process.env.DATABASE_HOST!,
+  port: parseInt(process.env.DATABASE_PORT!),
+  database: process.env.DATABASE_NAME!,
+  user: process.env.DATABASE_USER!,
+  password: process.env.DATABASE_PASSWORD!,
   min: parseInt(process.env.DATABASE_POOL_MIN || '2'),
   max: parseInt(process.env.DATABASE_POOL_MAX || '10'),
   idleTimeoutMillis: 30000,

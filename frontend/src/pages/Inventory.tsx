@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Tag, Button, Input, Select, Space, Row, Col, Badge, Dropdown, Modal, Form, InputNumber, message } from 'antd';
+import { Table, Card, Tag, Button, Input, Select, Space, Row, Col, Badge, Dropdown, Modal, Form, InputNumber, message, Divider } from 'antd';
 import {
   SearchOutlined,
   WarningOutlined,
@@ -49,7 +49,12 @@ const Inventory = () => {
   const [isStockModalVisible, setIsStockModalVisible] = useState(false);
   const [stockModalType, setStockModalType] = useState<'in' | 'out'>('in');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isBulkStockModalVisible, setIsBulkStockModalVisible] = useState(false);
+  const [bulkStockType, setBulkStockType] = useState<'in' | 'out'>('in');
   const [form] = Form.useForm();
+  const [bulkForm] = Form.useForm();
+  const [selectedBulkWarehouse, setSelectedBulkWarehouse] = useState<string | undefined>(undefined);
+  const [bulkItems, setBulkItems] = useState<Array<{ variantId: string; quantity: number }>>([]);
 
   // Fetch inventory data
   const { data: inventory, isLoading, refetch } = useQuery({
@@ -126,10 +131,14 @@ const Inventory = () => {
   // Stock mutation
   const stockMutation = useMutation({
     mutationFn: async (data: any) => {
-      return api.post(`/inventory/${data.id}/adjust`, {
+      return api.post('/inventory/adjust', {
+        warehouseId: data.warehouseId,
+        variantId: data.variantId,
         quantity: data.quantity,
         type: data.type,
-        reason: data.reason
+        notes: data.notes,
+        referenceType: 'manual_adjustment',
+        referenceId: null
       });
     },
     onSuccess: () => {
@@ -138,9 +147,40 @@ const Inventory = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-low-stock'] });
       setIsStockModalVisible(false);
       form.resetFields();
+      setSelectedItem(null);
     },
-    onError: () => {
-      message.error('Cập nhật tồn kho thất bại');
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Cập nhật tồn kho thất bại');
+    }
+  });
+
+  // Bulk stock mutation
+  const bulkStockMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const promises = data.items.map((item: any) =>
+        api.post('/inventory/adjust', {
+          warehouseId: data.warehouseId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          type: data.type,
+          notes: data.notes,
+          referenceType: 'manual_adjustment',
+          referenceId: null
+        })
+      );
+      return Promise.all(promises);
+    },
+    onSuccess: (_, variables) => {
+      message.success(`Đã ${variables.type === 'in' ? 'nhập' : 'xuất'} ${variables.items.length} sản phẩm thành công`);
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-low-stock'] });
+      setIsBulkStockModalVisible(false);
+      bulkForm.resetFields();
+      setSelectedBulkWarehouse(undefined);
+      setBulkItems([]);
+    },
+    onError: (error: any) => {
+      message.error(error?.response?.data?.message || 'Cập nhật tồn kho hàng loạt thất bại');
     }
   });
 
@@ -161,10 +201,11 @@ const Inventory = () => {
       const values = await form.validateFields();
       if (selectedItem) {
         await stockMutation.mutateAsync({
-          id: selectedItem.id,
+          warehouseId: selectedItem.warehouse_id,
+          variantId: selectedItem.variant_id,
           quantity: values.quantity,
           type: stockModalType,
-          reason: values.reason
+          notes: values.notes || ''
         });
       }
     } catch (error) {
@@ -360,217 +401,240 @@ const Inventory = () => {
       minHeight: '100vh'
     }}>
       {/* Stats Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
+      <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
+        <Col xs={24} sm={12} md={12} lg={6}>
           <Card
             variant="borderless"
             style={{
               background: isDarkMode
-                ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+                ? 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)'
                 : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 8,
               boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                : '0 4px 12px rgba(102, 126, 234, 0.2)'
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(102, 126, 234, 0.15)',
+              padding: 16,
+              height: '100%'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 14,
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  marginBottom: 8
+                  color: '#ffffff',
+                  marginBottom: 6,
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500
                 }}>
                   Tổng SKU
                 </div>
                 <div style={{
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: 700,
                   color: '#ffffff'
                 }}>
                   {stats.totalItems.toLocaleString()}
                 </div>
                 <div style={{
-                  fontSize: 12,
-                  color: 'rgba(255, 255, 255, 0.65)',
-                  marginTop: 4
+                  fontSize: 11,
+                  color: '#ffffff',
+                  marginTop: 4,
+                  opacity: 0.85
                 }}>
                   {stats.totalStock.toLocaleString()} sản phẩm
                 </div>
               </div>
               <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.15)',
+                width: 48,
+                height: 48,
+                minWidth: 48,
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <InboxOutlined style={{ fontSize: 28, color: '#ffffff' }} />
+                <InboxOutlined style={{ fontSize: 24, color: '#ffffff' }} />
               </div>
             </div>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} md={12} lg={6}>
           <Card
             variant="borderless"
             style={{
               background: isDarkMode
-                ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+                ? 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)'
                 : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 8,
               boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                : '0 4px 12px rgba(245, 87, 108, 0.2)'
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(245, 87, 108, 0.15)',
+              padding: 16,
+              height: '100%'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 14,
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  marginBottom: 8
+                  color: '#ffffff',
+                  marginBottom: 6,
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500
                 }}>
-                  Cảnh báo tồn kho
+                  Cảnh báo
                 </div>
                 <div style={{
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: 700,
                   color: '#ffffff'
                 }}>
-                  <Badge count={stats.lowStockCount} style={{ background: '#faad14' }}>
-                    <span style={{ color: '#ffffff' }}>{stats.lowStockCount}</span>
-                  </Badge>
+                  {stats.lowStockCount}
                 </div>
                 <div style={{
-                  fontSize: 12,
-                  color: 'rgba(255, 255, 255, 0.65)',
-                  marginTop: 4
+                  fontSize: 11,
+                  color: '#ffffff',
+                  marginTop: 4,
+                  opacity: 0.85
                 }}>
                   Sắp hết hàng
                 </div>
               </div>
               <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.15)',
+                width: 48,
+                height: 48,
+                minWidth: 48,
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <AlertOutlined style={{ fontSize: 28, color: '#ffffff' }} />
+                <AlertOutlined style={{ fontSize: 24, color: '#ffffff' }} />
               </div>
             </div>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} md={12} lg={6}>
           <Card
             variant="borderless"
             style={{
               background: isDarkMode
-                ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+                ? 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)'
                 : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 8,
               boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                : '0 4px 12px rgba(250, 112, 154, 0.2)'
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(250, 112, 154, 0.15)',
+              padding: 16,
+              height: '100%'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 14,
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  marginBottom: 8
+                  color: '#ffffff',
+                  marginBottom: 6,
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500
                 }}>
                   Hết hàng
                 </div>
                 <div style={{
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: 700,
                   color: '#ffffff'
                 }}>
                   {stats.outOfStockCount}
                 </div>
                 <div style={{
-                  fontSize: 12,
-                  color: 'rgba(255, 255, 255, 0.65)',
-                  marginTop: 4
+                  fontSize: 11,
+                  color: '#ffffff',
+                  marginTop: 4,
+                  opacity: 0.85
                 }}>
                   Cần nhập hàng
                 </div>
               </div>
               <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.15)',
+                width: 48,
+                height: 48,
+                minWidth: 48,
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <WarningOutlined style={{ fontSize: 28, color: '#ffffff' }} />
+                <WarningOutlined style={{ fontSize: 24, color: '#ffffff' }} />
               </div>
             </div>
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} md={12} lg={6}>
           <Card
             variant="borderless"
             style={{
               background: isDarkMode
-                ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+                ? 'linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%)'
                 : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 8,
               boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                : '0 4px 12px rgba(79, 172, 254, 0.2)'
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(79, 172, 254, 0.15)',
+              padding: 16,
+              height: '100%'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 14,
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  marginBottom: 8
+                  color: '#ffffff',
+                  marginBottom: 6,
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500
                 }}>
-                  Giá trị tồn kho
+                  Giá trị kho
                 </div>
                 <div style={{
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: 700,
                   color: '#ffffff',
-                  wordBreak: 'break-all'
+                  wordBreak: 'break-word',
+                  lineHeight: 1.2
                 }}>
                   {Math.round(stats.totalValue).toLocaleString('vi-VN')}₫
                 </div>
                 <div style={{
-                  fontSize: 12,
-                  color: 'rgba(255, 255, 255, 0.65)',
-                  marginTop: 4
+                  fontSize: 11,
+                  color: '#ffffff',
+                  marginTop: 4,
+                  opacity: 0.85
                 }}>
                   {stats.totalReserved} đã đặt
                 </div>
               </div>
               <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.15)',
+                width: 48,
+                height: 48,
+                minWidth: 48,
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <DollarOutlined style={{ fontSize: 28, color: '#ffffff' }} />
+                <DollarOutlined style={{ fontSize: 24, color: '#ffffff' }} />
               </div>
             </div>
           </Card>
@@ -686,6 +750,10 @@ const Inventory = () => {
               type="primary"
               icon={<ImportOutlined />}
               size="large"
+              onClick={() => {
+                setBulkStockType('in');
+                setIsBulkStockModalVisible(true);
+              }}
               style={{
                 background: 'linear-gradient(135deg, #00A6B8 0%, #26C6DA 100%)',
                 border: 'none'
@@ -697,6 +765,10 @@ const Inventory = () => {
               type="primary"
               icon={<ExportOutlined />}
               size="large"
+              onClick={() => {
+                setBulkStockType('out');
+                setIsBulkStockModalVisible(true);
+              }}
               style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none'
@@ -728,14 +800,32 @@ const Inventory = () => {
 
       {/* Stock Modal */}
       <Modal
-        title={stockModalType === 'in' ? 'Nhập kho' : 'Xuất kho'}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {stockModalType === 'in' ? (
+              <>
+                <ImportOutlined style={{ color: '#00A6B8' }} />
+                <span>Nhập kho</span>
+              </>
+            ) : (
+              <>
+                <ExportOutlined style={{ color: '#667eea' }} />
+                <span>Xuất kho</span>
+              </>
+            )}
+          </div>
+        }
         open={isStockModalVisible}
         onOk={handleStockSubmit}
         onCancel={() => {
           setIsStockModalVisible(false);
           form.resetFields();
+          setSelectedItem(null);
         }}
         confirmLoading={stockMutation.isPending}
+        okText={stockModalType === 'in' ? 'Nhập kho' : 'Xuất kho'}
+        cancelText="Hủy"
+        width={600}
         style={{ top: 20 }}
         styles={{
           body: {
@@ -745,40 +835,386 @@ const Inventory = () => {
         }}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 8 }}>
-          <Form.Item label="Sản phẩm">
-            <div>
-              <div style={{ fontWeight: 500 }}>{selectedItem?.product_name}</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                SKU: {selectedItem?.variant_sku} | Kho: {selectedItem?.warehouse_name}
+          {/* Product Info */}
+          <div style={{
+            background: isDarkMode ? '#1f1f1f' : '#f5f5f5',
+            padding: 16,
+            borderRadius: 8,
+            marginBottom: 20
+          }}>
+            <div style={{
+              fontWeight: 600,
+              fontSize: 15,
+              color: isDarkMode ? '#e6e6e6' : '#262626',
+              marginBottom: 8
+            }}>
+              {selectedItem?.product_name}
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: isDarkMode ? '#8c8c8c' : '#8c8c8c',
+              marginBottom: 4
+            }}>
+              {selectedItem?.variant_name && `${selectedItem.variant_name} • `}
+              SKU: {selectedItem?.variant_sku}
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: isDarkMode ? '#8c8c8c' : '#8c8c8c',
+              marginBottom: 8
+            }}>
+              Kho: {selectedItem?.warehouse_name}
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+                  Tồn kho hiện tại
+                </div>
+                <div style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: selectedItem?.quantity === 0 ? '#ff4d4f' :
+                         selectedItem?.isLowStock ? '#faad14' : '#52c41a'
+                }}>
+                  {selectedItem?.quantity?.toLocaleString() || 0}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                Tồn kho hiện tại: {selectedItem?.quantity}
+
+              <div>
+                <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+                  Đã đặt
+                </div>
+                <div style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: isDarkMode ? '#e6e6e6' : '#595959'
+                }}>
+                  {selectedItem?.reserved_quantity?.toLocaleString() || 0}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+                  Khả dụng
+                </div>
+                <div style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: isDarkMode ? '#e6e6e6' : '#262626'
+                }}>
+                  {((selectedItem?.quantity || 0) - (selectedItem?.reserved_quantity || 0)).toLocaleString()}
+                </div>
               </div>
             </div>
-          </Form.Item>
+          </div>
 
+          {/* Quantity Input */}
           <Form.Item
             name="quantity"
-            label="Số lượng"
+            label={
+              <span style={{ fontWeight: 500 }}>
+                Số lượng {stockModalType === 'in' ? 'nhập' : 'xuất'}
+              </span>
+            }
             rules={[
               { required: true, message: 'Vui lòng nhập số lượng' },
-              { type: 'number', min: 1, message: 'Số lượng phải lớn hơn 0' }
+              { type: 'number', min: 1, message: 'Số lượng phải lớn hơn 0' },
+              stockModalType === 'out' ? {
+                validator: (_, value) => {
+                  const available = (selectedItem?.quantity || 0) - (selectedItem?.reserved_quantity || 0);
+                  if (value > available) {
+                    return Promise.reject(`Số lượng xuất không được vượt quá ${available}`);
+                  }
+                  return Promise.resolve();
+                }
+              } : {}
             ]}
           >
             <InputNumber
               style={{ width: '100%' }}
+              size="large"
               min={1}
-              placeholder="Nhập số lượng"
+              max={stockModalType === 'out' ? (selectedItem?.quantity || 0) - (selectedItem?.reserved_quantity || 0) : undefined}
+              placeholder={`Nhập số lượng ${stockModalType === 'in' ? 'nhập kho' : 'xuất kho'}`}
+              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => value!.replace(/\$\s?|(,*)/g, '')}
             />
           </Form.Item>
 
+          {/* Notes */}
           <Form.Item
-            name="reason"
-            label="Lý do"
+            name="notes"
+            label={<span style={{ fontWeight: 500 }}>Ghi chú</span>}
           >
             <Input.TextArea
               rows={3}
-              placeholder="Nhập lý do (tùy chọn)"
+              placeholder="Nhập lý do hoặc ghi chú (không bắt buộc)"
+              style={{
+                background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                color: isDarkMode ? '#e6e6e6' : '#262626',
+                borderColor: isDarkMode ? '#434343' : '#d9d9d9'
+              }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Bulk Stock Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {bulkStockType === 'in' ? (
+              <>
+                <ImportOutlined style={{ color: '#00A6B8' }} />
+                <span>Nhập kho hàng loạt</span>
+              </>
+            ) : (
+              <>
+                <ExportOutlined style={{ color: '#667eea' }} />
+                <span>Xuất kho hàng loạt</span>
+              </>
+            )}
+          </div>
+        }
+        open={isBulkStockModalVisible}
+        onOk={async () => {
+          try {
+            const values = await bulkForm.validateFields();
+
+            if (!selectedBulkWarehouse) {
+              message.error('Vui lòng chọn kho');
+              return;
+            }
+
+            if (bulkItems.length === 0) {
+              message.error('Vui lòng thêm ít nhất một sản phẩm');
+              return;
+            }
+
+            await bulkStockMutation.mutateAsync({
+              warehouseId: selectedBulkWarehouse,
+              items: bulkItems,
+              type: bulkStockType,
+              notes: values.notes || ''
+            });
+          } catch (error) {
+            console.error('Validation failed:', error);
+          }
+        }}
+        onCancel={() => {
+          setIsBulkStockModalVisible(false);
+          bulkForm.resetFields();
+          setSelectedBulkWarehouse(undefined);
+          setBulkItems([]);
+        }}
+        confirmLoading={bulkStockMutation.isPending}
+        okText={bulkStockType === 'in' ? 'Nhập kho' : 'Xuất kho'}
+        cancelText="Hủy"
+        width={900}
+        style={{ top: 20 }}
+        styles={{
+          body: {
+            padding: 24,
+            background: isDarkMode ? '#141414' : '#ffffff',
+            maxHeight: 'calc(100vh - 200px)',
+            overflowY: 'auto'
+          }
+        }}
+      >
+        <Form form={bulkForm} layout="vertical">
+          {/* Warehouse Selection */}
+          <Form.Item
+            label={<span style={{ fontWeight: 500 }}>Chọn kho</span>}
+            required
+          >
+            <Select
+              placeholder="Chọn kho để nhập/xuất"
+              value={selectedBulkWarehouse}
+              onChange={setSelectedBulkWarehouse}
+              size="large"
+              style={{ width: '100%' }}
+              classNames={{
+                popup: isDarkMode ? 'dark-select-dropdown' : ''
+              }}
+            >
+              {warehouses?.data?.map((wh: any) => (
+                <Select.Option key={wh.id} value={wh.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShopOutlined />
+                    <span>{wh.name}</span>
+                  </div>
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Divider />
+
+          {/* Product Selection */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 12
+            }}>
+              <span style={{ fontWeight: 500, fontSize: 14 }}>
+                Danh sách sản phẩm ({bulkItems.length})
+              </span>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  bulkForm.setFieldsValue({
+                    [`variant_${Date.now()}`]: undefined,
+                    [`quantity_${Date.now()}`]: 1
+                  });
+                }}
+              >
+                Thêm sản phẩm
+              </Button>
+            </div>
+
+            {/* Product List */}
+            <div style={{
+              background: isDarkMode ? '#1f1f1f' : '#fafafa',
+              padding: 16,
+              borderRadius: 8,
+              minHeight: 200
+            }}>
+              {bulkItems.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
+                  <InboxOutlined style={{ fontSize: 48, marginBottom: 12 }} />
+                  <div>Chưa có sản phẩm nào</div>
+                  <div style={{ fontSize: 12, marginTop: 4 }}>
+                    Nhấn "Thêm sản phẩm" để bắt đầu
+                  </div>
+                </div>
+              ) : (
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  {bulkItems.map((item, index) => {
+                    const inventoryItem = inventory?.data?.find(
+                      (inv: InventoryItem) =>
+                        inv.variant_id === item.variantId &&
+                        inv.warehouse_id === selectedBulkWarehouse
+                    );
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          background: isDarkMode ? '#141414' : '#ffffff',
+                          padding: 12,
+                          borderRadius: 6,
+                          border: `1px solid ${isDarkMode ? '#434343' : '#d9d9d9'}`
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 500, marginBottom: 4 }}>
+                              {inventoryItem?.product_name}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                              SKU: {inventoryItem?.variant_sku}
+                              {' • '}
+                              Tồn kho: {inventoryItem?.quantity || 0}
+                            </div>
+                          </div>
+                          <div style={{ width: 120 }}>
+                            <InputNumber
+                              value={item.quantity}
+                              onChange={(value) => {
+                                const newItems = [...bulkItems];
+                                newItems[index].quantity = value || 1;
+                                setBulkItems(newItems);
+                              }}
+                              min={1}
+                              style={{ width: '100%' }}
+                              placeholder="Số lượng"
+                            />
+                          </div>
+                          <Button
+                            type="text"
+                            danger
+                            icon={<WarningOutlined />}
+                            onClick={() => {
+                              setBulkItems(bulkItems.filter((_, i) => i !== index));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Space>
+              )}
+            </div>
+
+            {/* Add Product Form */}
+            {selectedBulkWarehouse && (
+              <div style={{
+                marginTop: 12,
+                background: isDarkMode ? '#1f1f1f' : '#f5f5f5',
+                padding: 12,
+                borderRadius: 6
+              }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Select
+                    placeholder="Chọn sản phẩm"
+                    style={{ flex: 1 }}
+                    showSearch
+                    filterOption={(input, option: any) => {
+                      const item = inventory?.data?.find(
+                        (inv: InventoryItem) => inv.variant_id === option.value
+                      );
+                      return (
+                        item?.product_name?.toLowerCase().includes(input.toLowerCase()) ||
+                        item?.variant_sku?.toLowerCase().includes(input.toLowerCase())
+                      );
+                    }}
+                    onChange={(variantId) => {
+                      if (!bulkItems.find(item => item.variantId === variantId)) {
+                        setBulkItems([...bulkItems, { variantId, quantity: 1 }]);
+                      } else {
+                        message.warning('Sản phẩm đã được thêm');
+                      }
+                    }}
+                    value={null}
+                    classNames={{
+                      popup: isDarkMode ? 'dark-select-dropdown' : ''
+                    }}
+                  >
+                    {inventory?.data
+                      ?.filter((inv: InventoryItem) => inv.warehouse_id === selectedBulkWarehouse)
+                      ?.map((inv: InventoryItem) => (
+                        <Select.Option key={inv.variant_id} value={inv.variant_id}>
+                          <div>
+                            <div>{inv.product_name}</div>
+                            <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                              SKU: {inv.variant_sku} • Tồn: {inv.quantity}
+                            </div>
+                          </div>
+                        </Select.Option>
+                      ))}
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notes */}
+          <Form.Item
+            name="notes"
+            label={<span style={{ fontWeight: 500 }}>Ghi chú</span>}
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder="Nhập lý do hoặc ghi chú (không bắt buộc)"
+              style={{
+                background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                color: isDarkMode ? '#e6e6e6' : '#262626',
+                borderColor: isDarkMode ? '#434343' : '#d9d9d9'
+              }}
             />
           </Form.Item>
         </Form>

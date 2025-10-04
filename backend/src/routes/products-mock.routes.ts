@@ -239,7 +239,7 @@ router.get('/:id', (req: Request, res: Response) => {
 // router.use(authenticate);
 
 // Create product
-router.post('/', /* authorize(['admin', 'manager']), */ (req: Request, res: Response) => {
+router.post('/', /* authorize('admin', 'manager'), */ (req: Request, res: Response) => {
   const newProduct = {
     id: String(mockProducts.length + 1),
     ...req.body,
@@ -257,7 +257,7 @@ router.post('/', /* authorize(['admin', 'manager']), */ (req: Request, res: Resp
 });
 
 // Update product
-router.put('/:id', /* authorize(['admin', 'manager']), */ (req: Request, res: Response) => {
+router.put('/:id', /* authorize('admin', 'manager'), */ (req: Request, res: Response) => {
   const { id } = req.params;
   const index = mockProducts.findIndex(p => p.id === id);
 
@@ -282,7 +282,7 @@ router.put('/:id', /* authorize(['admin', 'manager']), */ (req: Request, res: Re
 });
 
 // Update stock
-router.patch('/:id/stock', /* authorize(['admin', 'manager', 'staff']), */ (req: Request, res: Response) => {
+router.patch('/:id/stock', /* authorize('admin', 'manager', 'staff'), */ (req: Request, res: Response) => {
   const { id } = req.params;
   const { quantity } = req.body;
   const index = mockProducts.findIndex(p => p.id === id);
@@ -304,7 +304,7 @@ router.patch('/:id/stock', /* authorize(['admin', 'manager', 'staff']), */ (req:
 });
 
 // Delete product
-router.delete('/:id', /* authorize(['admin']), */ (req: Request, res: Response) => {
+router.delete('/:id', /* authorize('admin'), */ (req: Request, res: Response) => {
   const { id } = req.params;
   const index = mockProducts.findIndex(p => p.id === id);
 
@@ -324,7 +324,7 @@ router.delete('/:id', /* authorize(['admin']), */ (req: Request, res: Response) 
 });
 
 // Bulk operations
-router.post('/bulk-update', /* authorize(['admin', 'manager']), */ (req: Request, res: Response) => {
+router.post('/bulk-update', /* authorize('admin', 'manager'), */ (req: Request, res: Response) => {
   const { ids, data } = req.body;
 
   ids.forEach((id: string) => {
@@ -343,7 +343,7 @@ router.post('/bulk-update', /* authorize(['admin', 'manager']), */ (req: Request
   });
 });
 
-router.post('/bulk-delete', /* authorize(['admin']), */ (req: Request, res: Response) => {
+router.post('/bulk-delete', /* authorize('admin'), */ (req: Request, res: Response) => {
   const { ids } = req.body;
 
   ids.forEach((id: string) => {

@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {
   Row,
   Col,
-  Card, 
-  Input, 
-  Button, 
-  Space, 
-  Table, 
-  Typography, 
+  Card,
+  Input,
+  Button,
+  Space,
+  Table,
+  Typography,
   InputNumber,
-  Tag, 
-  Modal, 
-  Form, 
-  Select, 
-  message, 
+  Tag,
+  Modal,
+  Form,
+  Select,
+  message,
   Divider,
   List,
   Avatar,
@@ -24,6 +24,7 @@ import {
   Statistic,
   Empty,
   Grid,
+  Drawer,
 } from 'antd';
 import {
   SearchOutlined,
@@ -51,12 +52,20 @@ import {
   UnorderedListOutlined,
   ScanOutlined,
   CalculatorOutlined,
+  LineChartOutlined,
+  GiftOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useThemeStore } from '@/stores/themeStore';
 import POSLayout from '@/layouts/POSLayout';
 import { InvoiceGenerator, InvoiceData, InvoiceItem } from '@/utils/invoiceGenerator';
 import type { ColumnsType } from 'antd/es/table';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/services/api';
+import { POSDashboardPanel } from '../components/POSDashboardPanel';
+import { LoyaltyPointsModal } from '../components/LoyaltyPointsModal';
+import { ProductAutocomplete } from '../components/ProductAutocomplete';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -133,6 +142,11 @@ const POSSales: React.FC = () => {
   const barcodeInputRef = useRef<any>(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [dashboardVisible, setDashboardVisible] = useState(false);
+  const [loyaltyModalVisible, setLoyaltyModalVisible] = useState(false);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [usedPoints, setUsedPoints] = useState(0);
+  const [cartDrawerVisible, setCartDrawerVisible] = useState(false);
 
   // Add CSS animations
   React.useEffect(() => {
@@ -168,11 +182,38 @@ const POSSales: React.FC = () => {
           transform: scale(1.05);
         }
       }
-      
+
+      @keyframes shine {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 200%;
+        }
+      }
+
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
       .payment-modal-content {
         animation: fadeInScale 0.3s ease-out;
       }
-      
+
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
       .payment-method-card {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -195,38 +236,113 @@ const POSSales: React.FC = () => {
     };
   }, []);
 
-  // Mock products data with placeholder images
-  const mockProducts: Product[] = [
-    { id: '1', barcode: '8934563201234', name: 'Máy đo huyết áp Omron HEM-7121', price: 1250000, stock: 15, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
-    { id: '2', barcode: '8934563201235', name: 'Nhiệt kế điện tử Microlife MT550', price: 150000, stock: 50, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
-    { id: '3', barcode: '8934563201236', name: 'Máy đo đường huyết Accu-Chek', price: 850000, stock: 20, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?w=300&h=300&fit=crop' },
-    { id: '4', barcode: '8934563201237', name: 'Khẩu trang y tế 4 lớp (50 cái)', price: 45000, stock: 200, unit: 'hộp', category: 'consumable', image: 'https://images.unsplash.com/photo-1584634428004-1caaca977f01?w=300&h=300&fit=crop' },
-    { id: '5', barcode: '8934563201238', name: 'Găng tay y tế Latex (100 đôi)', price: 65000, stock: 100, unit: 'hộp', category: 'consumable', image: 'https://images.unsplash.com/photo-1599493758267-c6c884c7071f?w=300&h=300&fit=crop' },
-    { id: '6', barcode: '8934563201239', name: 'Máy xông khí dung Omron NE-C28', price: 1650000, stock: 10, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=300&h=300&fit=crop' },
-    { id: '7', barcode: '8934563201240', name: 'Máy đo SpO2 Beurer PO30', price: 450000, stock: 25, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
-    { id: '8', barcode: '8934563201241', name: 'Băng gạc y tế 5cm x 5m', price: 25000, stock: 150, unit: 'cuộn', category: 'consumable', image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=300&h=300&fit=crop' },
-    { id: '9', barcode: '8934563201242', name: 'Bông y tế 100g', price: 15000, stock: 100, unit: 'gói', category: 'consumable', image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=300&h=300&fit=crop' },
-    { id: '10', barcode: '8934563201243', name: 'Cồn y tế 70 độ (500ml)', price: 35000, stock: 80, unit: 'chai', category: 'consumable', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
-    { id: '11', barcode: '8934563201244', name: 'Que test Covid-19', price: 25000, stock: 500, unit: 'que', category: 'test', image: 'https://images.unsplash.com/photo-1605289982774-9a6fef564df8?w=300&h=300&fit=crop' },
-    { id: '12', barcode: '8934563201245', name: 'Máy massage cổ vai gáy', price: 890000, stock: 12, unit: 'cái', category: 'device', image: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?w=300&h=300&fit=crop' },
-  ];
+  // Fetch products from API
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: ['pos-products'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/products?status=active&limit=1000');
+        // API returns { success: true, data: [...] }
+        return response.data?.data || [];
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        return [];
+      }
+    },
+  });
 
-  // Mock customers
-  const mockCustomers: Customer[] = [
-    { id: '1', name: 'Nguyễn Văn A', phone: '0901234567', points: 1500, type: 'vip' },
-    { id: '2', name: 'Trần Thị B', phone: '0912345678', points: 800, type: 'regular' },
-    { id: '3', name: 'Lê Văn C', phone: '0923456789', points: 2000, type: 'vip' },
-  ];
+  // Fetch customers from API
+  const { data: customersData, isLoading: customersLoading } = useQuery({
+    queryKey: ['pos-customers'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/customers?status=active&limit=1000');
+        return response.data?.data?.customers || [];
+      } catch (error) {
+        console.error('Failed to fetch customers:', error);
+        return [];
+      }
+    },
+  });
 
-  // Categories with colors
-  const categories = [
-    { key: 'all', label: 'Tất cả', icon: '🌈', color: '#607D8B' },
-    { key: 'device', label: 'Thiết bị', icon: '💻', color: '#2196F3' },
-    { key: 'consumable', label: 'Vật tư', icon: '🧴', color: '#4CAF50' },
-    { key: 'test', label: 'Que test', icon: '🧪', color: '#00BCD4' },
-    { key: 'medicine', label: 'Thuốc', icon: '💉', color: '#F44336' },
-    { key: 'equipment', label: 'Dụng cụ', icon: '🔬', color: '#9C27B0' },
-  ];
+  // Transform API products to POS Product format
+  const products: Product[] = React.useMemo(() => {
+    if (!productsData) return [];
+    return productsData.map((p: any) => ({
+      id: p.id.toString(),
+      barcode: p.barcode || p.sku || '',
+      name: p.name,
+      price: parseFloat(p.price) || 0,
+      stock: p.stockQuantity || 0,
+      unit: p.unit || 'cái',
+      category: p.category?.slug || 'device',
+      image: p.image || p.images?.[0] || '',
+      discount: 0,
+    }));
+  }, [productsData]);
+
+  // Transform API customers to POS Customer format
+  const customers: Customer[] = React.useMemo(() => {
+    if (!customersData) return [];
+    return customersData.map((c: any) => ({
+      id: c.id.toString(),
+      name: c.name,
+      phone: c.phone || '',
+      email: c.email,
+      points: c.points || 0,
+      type: c.type || 'regular',
+    }));
+  }, [customersData]);
+
+  // Fetch categories from API
+  const { data: categoriesData } = useQuery({
+    queryKey: ['pos-categories'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/categories');
+        return response.data?.data || [];
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        return [];
+      }
+    },
+  });
+
+  // Category color mapping - map to actual database slugs
+  const categoryColorMap: Record<string, string> = {
+    'thuoc-ho': '#FF5722',
+    'thuc-pham-chuc-nang': '#4CAF50',
+    'vat-tu-y-te': '#00BCD4',
+    'may-do-duong-huyet': '#2196F3',
+    'thuoc-khang-sinh': '#F44336',
+    'thiet-bi-y-te': '#9C27B0',
+    'dung-cu-y-te': '#607D8B',
+    'vitamin': '#8BC34A',
+    'duoc-my-pham': '#E91E63',
+  };
+
+  // Transform API categories to POS format
+  const categories = React.useMemo(() => {
+    const allCategory = {
+      key: 'all',
+      label: 'Tất cả',
+      color: '#607D8B',
+      slug: 'all'
+    };
+
+    if (!categoriesData || categoriesData.length === 0) {
+      return [allCategory];
+    }
+
+    const apiCategories = categoriesData.map((cat: any) => ({
+      key: cat.slug || cat.id.toString(),
+      label: cat.name,
+      color: categoryColorMap[cat.slug] || '#607D8B',
+      slug: cat.slug,
+    }));
+
+    return [allCategory, ...apiCategories];
+  }, [categoriesData]);
 
   useEffect(() => {
     // Focus on barcode input
@@ -267,7 +383,7 @@ const POSSales: React.FC = () => {
 
   // Filter products by category and search
   const getFilteredProducts = () => {
-    let filtered = mockProducts;
+    let filtered = products;
     
     if (activeCategory !== 'all') {
       filtered = filtered.filter(p => p.category === activeCategory);
@@ -286,16 +402,22 @@ const POSSales: React.FC = () => {
   // Calculate totals
   const calculateTotals = () => {
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const discountAmount = cart.reduce((sum, item) => sum + item.discountAmount, 0);
-    const tax = (subtotal - discountAmount) * 0.1; // 10% VAT
-    const total = subtotal - discountAmount + tax;
-    
-    return { subtotal, discount: discountAmount, tax, total };
+    const itemDiscountAmount = cart.reduce((sum, item) => sum + item.discountAmount, 0);
+    const totalDiscount = itemDiscountAmount + loyaltyDiscount;
+    const tax = (subtotal - totalDiscount) * 0.1; // 10% VAT
+    const total = subtotal - totalDiscount + tax;
+
+    return { subtotal, discount: totalDiscount, tax, total };
+  };
+
+  const handleApplyLoyaltyDiscount = (discount: number, points: number) => {
+    setLoyaltyDiscount(discount);
+    setUsedPoints(points);
   };
 
   // Handle barcode scan
   const handleBarcodeScan = (barcode: string) => {
-    const product = mockProducts.find(p => p.barcode === barcode);
+    const product = products.find(p => p.barcode === barcode);
     if (product) {
       addToCart(product);
       setSearchText('');
@@ -427,29 +549,57 @@ const POSSales: React.FC = () => {
   };
 
   // Complete payment
-  const completePayment = () => {
+  const completePayment = async () => {
     setLoading(true);
-    
-    setTimeout(() => {
-      message.success('Thanh toán thành công');
-      
-      // Print receipt
-      printReceipt();
-      
-      // Open cash drawer (simulated)
-      if (paymentMethod === 'cash') {
-        message.info('Mở két tiền...');
+
+    try {
+      const { subtotal, discount, tax, total } = calculateTotals();
+
+      // Save order to database
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          discount: item.discountAmount
+        })),
+        customerId: selectedCustomer?.id || null,
+        customerInfo: selectedCustomer ? {
+          name: selectedCustomer.name,
+          phone: selectedCustomer.phone
+        } : null,
+        paymentMethod,
+        receivedAmount,
+        discount,
+        notes: ''
+      };
+
+      const response = await api.post('/pos/orders', orderData);
+
+      if (response.data.success) {
+        message.success('Thanh toán thành công');
+
+        // Print receipt with order number
+        printReceipt(response.data.data.orderNumber);
+
+        // Open cash drawer (simulated)
+        if (paymentMethod === 'cash') {
+          message.info('Mở két tiền...');
+        }
+
+        // Clear cart
+        setCart([]);
+        setSelectedCustomer(null);
+        setPaymentModalVisible(false);
+
+        // Focus back to barcode input
+        setTimeout(() => barcodeInputRef.current?.focus(), 100);
       }
-      
-      // Clear cart
-      setCart([]);
-      setSelectedCustomer(null);
-      setPaymentModalVisible(false);
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi lưu đơn hàng');
+    } finally {
       setLoading(false);
-      
-      // Focus back to barcode input
-      barcodeInputRef.current?.focus();
-    }, 1000);
+    }
   };
 
   // Print temporary invoice (for preview)
@@ -650,110 +800,211 @@ const POSSales: React.FC = () => {
 
   const { subtotal, discount, tax, total } = calculateTotals();
 
+  // Show loading state while fetching data
+  if (productsLoading || customersLoading) {
+    return (
+      <POSLayout>
+        <div style={{
+          height: 'calc(100vh - 64px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: isDarkMode ? '#0F1419' : '#F0F2F5'
+        }}>
+          <Space direction="vertical" align="center" size="large">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <ShoppingCartOutlined style={{ fontSize: 48, color: '#00A6B8' }} />
+            </motion.div>
+            <Text style={{ fontSize: 16, color: isDarkMode ? '#fff' : '#666' }}>
+              Đang tải dữ liệu POS...
+            </Text>
+          </Space>
+        </div>
+      </POSLayout>
+    );
+  }
 
   return (
     <POSLayout>
-      <div style={{ height: 'calc(100vh - 64px)', display: 'flex', background: isDarkMode ? '#0F1419' : '#F0F2F5' }}>
-        
+      <div style={{
+        height: 'calc(100vh - 64px)',
+        display: 'flex',
+        background: isDarkMode
+          ? 'linear-gradient(135deg, #0F1419 0%, #1A1F2E 50%, #0F1419 100%)'
+          : 'linear-gradient(135deg, #F0F5FF 0%, #E6F0FF 50%, #F0F5FF 100%)',
+        flexDirection: screens.md ? 'row' : 'column',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Animated Background Pattern */}
+        <div style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          opacity: isDarkMode ? 0.03 : 0.04,
+          backgroundImage: `radial-gradient(circle at 25px 25px, ${isDarkMode ? '#00A6B8' : '#1890ff'} 2%, transparent 0%),
+                           radial-gradient(circle at 75px 75px, ${isDarkMode ? '#00A6B8' : '#1890ff'} 2%, transparent 0%)`,
+          backgroundSize: '100px 100px',
+          pointerEvents: 'none',
+        }} />
+
         {/* Left Panel - Product Selection */}
-        <div style={{ 
-          flex: '1 1 65%', 
+        <div style={{
+          flex: screens.md ? '1 1 65%' : '1',
           display: 'flex',
           flexDirection: 'column',
-          borderRight: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#E8E8E8'}`,
-          background: isDarkMode ? '#131821' : '#FFFFFF',
+          borderRight: screens.md ? `1px solid ${isDarkMode ? 'rgba(0,166,184,0.15)' : 'rgba(24,144,255,0.15)'}` : 'none',
+          background: isDarkMode
+            ? 'linear-gradient(180deg, rgba(19,24,33,0.95) 0%, rgba(15,20,25,0.98) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(250,251,252,0.98) 100%)',
+          maxHeight: screens.md ? 'none' : 'calc(100vh - 64px)',
+          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          zIndex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
         }}>
           
-          {/* Search Header */}
-          <div style={{ 
-            padding: '12px 16px',
-            borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#F0F0F0'}`,
-            background: isDarkMode ? '#1A2332' : '#FAFBFC',
+          {/* Compact Search Header */}
+          <div style={{
+            padding: '10px 16px',
+            borderBottom: `1px solid ${isDarkMode ? 'rgba(0,166,184,0.08)' : 'rgba(24,144,255,0.08)'}`,
+            background: isDarkMode
+              ? 'rgba(26,35,50,0.4)'
+              : 'rgba(255,255,255,0.6)',
+            backdropFilter: 'blur(20px)',
+            flexShrink: 0,
+            minWidth: 0,
           }}>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <Input
-                ref={barcodeInputRef}
-                size="large"
-                placeholder="Quét mã vạch hoặc tìm sản phẩm... (F1)"
-                prefix={<ScanOutlined style={{ fontSize: 18, color: '#00A6B8' }} />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onPressEnter={(e) => handleBarcodeScan(e.currentTarget.value)}
-                style={{ 
-                  fontSize: 15,
-                  height: 44,
-                  borderRadius: 8,
-                  flex: 1,
-                }}
-                allowClear
+            <div style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+            }}>
+              <ProductAutocomplete
+                onSelect={addToCart}
+                placeholder="Tìm kiếm..."
+                style={{ flex: 1, maxWidth: screens.md ? 400 : '100%' }}
               />
-              <Space.Compact>
-                <Tooltip title="Chế độ lưới">
+
+              {/* Category Filter - Inline */}
+              {categories.length > 4 && (
+                <Select
+                  value={activeCategory}
+                  onChange={setActiveCategory}
+                  style={{ width: 150 }}
+                  size="middle"
+                  options={categories.map(cat => ({
+                    value: cat.key,
+                    label: cat.label,
+                  }))}
+                  suffixIcon={
+                    <Tag color={categories.find(c => c.key === activeCategory)?.color} style={{ margin: 0, fontSize: 9, padding: '0 4px' }}>
+                      {getFilteredProducts().length}
+                    </Tag>
+                  }
+                />
+              )}
+
+              <Tooltip title="Thống kê">
+                <Button
+                  size="middle"
+                  icon={<LineChartOutlined />}
+                  onClick={() => setDashboardVisible(true)}
+                  style={{
+                    borderRadius: 8,
+                    width: 36,
+                    height: 36,
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                />
+              </Tooltip>
+              {screens.sm && (
+                <Space.Compact size="middle">
                   <Button
-                    size="large"
                     icon={<AppstoreOutlined />}
                     type={viewMode === 'grid' ? 'primary' : 'default'}
                     onClick={() => setViewMode('grid')}
-                    style={{ height: 44 }}
+                    style={{ width: 36, height: 36, padding: 0 }}
                   />
-                </Tooltip>
-                <Tooltip title="Chế độ danh sách">
                   <Button
-                    size="large"
                     icon={<UnorderedListOutlined />}
                     type={viewMode === 'list' ? 'primary' : 'default'}
                     onClick={() => setViewMode('list')}
-                    style={{ height: 44 }}
+                    style={{ width: 36, height: 36, padding: 0 }}
                   />
-                </Tooltip>
-              </Space.Compact>
+                </Space.Compact>
+              )}
             </div>
-            
-            {/* Category Pills */}
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-              {categories.map(cat => (
-                <button
-                  key={cat.key}
-                  onClick={() => setActiveCategory(cat.key)}
-                  style={{
-                    padding: '6px 16px',
-                    borderRadius: 20,
-                    border: activeCategory === cat.key 
-                      ? `2px solid ${cat.color}`
-                      : `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : '#E8E8E8'}`,
-                    background: activeCategory === cat.key
-                      ? isDarkMode ? `${cat.color}20` : `${cat.color}10`
-                      : isDarkMode ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
-                    color: activeCategory === cat.key
-                      ? cat.color
-                      : isDarkMode ? '#FFFFFF' : '#595959',
-                    fontSize: 14,
-                    fontWeight: activeCategory === cat.key ? 600 : 400,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{cat.icon}</span>
-                  {cat.label}
-                  {activeCategory === cat.key && (
-                    <span style={{
-                      background: cat.color,
-                      color: '#FFFFFF',
-                      padding: '2px 8px',
+
+            {/* Category Filter Pills - Show below only if 4 or fewer categories */}
+            {categories.length <= 4 && (
+              // Show as pills if 4 or fewer categories
+              <div style={{
+                display: 'flex',
+                gap: 6,
+                marginTop: 8,
+                paddingBottom: 4,
+                flexWrap: 'wrap',
+              }}>
+                {categories.map(cat => (
+                  <motion.button
+                    key={cat.key}
+                    onClick={() => setActiveCategory(cat.key)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{
+                      padding: '4px 10px',
                       borderRadius: 12,
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}>
-                      {getFilteredProducts().length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+                      border: 'none',
+                      background: activeCategory === cat.key
+                        ? `linear-gradient(135deg, ${cat.color} 0%, ${cat.color}DD 100%)`
+                        : isDarkMode
+                          ? 'rgba(255,255,255,0.04)'
+                          : 'rgba(0,0,0,0.04)',
+                      color: activeCategory === cat.key
+                        ? '#FFFFFF'
+                        : isDarkMode ? 'rgba(255,255,255,0.65)' : '#666',
+                      fontSize: 11.5,
+                      fontWeight: activeCategory === cat.key ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      boxShadow: activeCategory === cat.key
+                        ? `0 2px 6px ${cat.color}35`
+                        : 'none',
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {cat.label}
+                    {activeCategory === cat.key && (
+                      <span style={{
+                        background: 'rgba(255,255,255,0.3)',
+                        color: '#FFFFFF',
+                        padding: '1px 5px',
+                        borderRadius: 6,
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        minWidth: 18,
+                        textAlign: 'center',
+                        lineHeight: '14px',
+                      }}>
+                        {getFilteredProducts().length}
+                      </span>
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Products Display */}
@@ -778,75 +1029,126 @@ const POSSales: React.FC = () => {
                 width: '100%',
               }}>
                 {getFilteredProducts().map(product => {
-                  const categoryColor = categories.find(c => c.key === product.category)?.color || '#00A6B8';
-                  const categoryIcon = categories.find(c => c.key === product.category)?.icon || '📦';
+                  const categoryColor = categories.find(c => c.key === product.category || c.slug === product.category)?.color || '#00A6B8';
                   return (
                     <motion.div
                       key={product.id}
-                      whileHover={{ scale: product.stock > 0 ? 1.02 : 1 }}
-                      whileTap={{ scale: product.stock > 0 ? 0.98 : 1 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      whileHover={{
+                        scale: product.stock > 0 ? 1.04 : 1,
+                        y: product.stock > 0 ? -4 : 0,
+                      }}
+                      whileTap={{ scale: product.stock > 0 ? 0.96 : 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                       <Card
                           onClick={() => addToCart(product)}
                           style={{
                             height: '100%',
-                            minHeight: 230,
+                            minHeight: 240,
                             cursor: product.stock > 0 ? 'pointer' : 'not-allowed',
-                            opacity: product.stock === 0 ? 0.5 : 1,
-                            borderRadius: 16,
+                            opacity: product.stock === 0 ? 0.6 : 1,
+                            borderRadius: 20,
                             overflow: 'hidden',
-                            border: isDarkMode 
-                              ? '1px solid rgba(255,255,255,0.06)' 
-                              : '1px solid rgba(0,0,0,0.04)',
+                            border: isDarkMode
+                              ? `1.5px solid ${product.stock > 0 ? `${categoryColor}25` : 'rgba(255,255,255,0.05)'}`
+                              : `1.5px solid ${product.stock > 0 ? `${categoryColor}20` : 'rgba(0,0,0,0.04)'}`,
                             background: isDarkMode
-                              ? 'linear-gradient(145deg, #1A2332 0%, #141921 100%)'
-                              : 'linear-gradient(145deg, #FFFFFF 0%, #FAFBFC 100%)',
+                              ? `linear-gradient(145deg, rgba(26,35,50,0.6) 0%, rgba(20,25,33,0.8) 100%)`
+                              : `linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(250,251,252,0.95) 100%)`,
                             boxShadow: product.stock > 0
                               ? isDarkMode
-                                ? '0 4px 16px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)'
-                                : '0 4px 16px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02)'
+                                ? `0 8px 32px rgba(0,0,0,0.4), 0 4px 16px ${categoryColor}15, inset 0 1px 0 rgba(255,255,255,0.05)`
+                                : `0 8px 32px rgba(0,0,0,0.08), 0 4px 16px ${categoryColor}10, inset 0 1px 0 rgba(255,255,255,0.8)`
                               : 'none',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            backdropFilter: 'blur(12px)',
+                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                            position: 'relative',
                           }}
                           styles={{ body: { padding: 0 } }}
                           hoverable={false}
                         >
+                          {/* Glow effect on hover */}
+                          {product.stock > 0 && (
+                            <div style={{
+                              position: 'absolute',
+                              top: -2,
+                              left: -2,
+                              right: -2,
+                              bottom: -2,
+                              background: `linear-gradient(135deg, ${categoryColor}40, transparent)`,
+                              borderRadius: 20,
+                              opacity: 0,
+                              transition: 'opacity 0.3s',
+                              pointerEvents: 'none',
+                            }} className="card-glow" />
+                          )}
+
                           {/* Product Image */}
-                          <div style={{ 
+                          <div style={{
                             position: 'relative',
-                            height: 120,
+                            height: 130,
                             background: isDarkMode
-                              ? `linear-gradient(135deg, ${categoryColor}10 0%, ${categoryColor}05 100%)`
-                              : `linear-gradient(135deg, ${categoryColor}05 0%, ${categoryColor}02 100%)`,
-                            borderBottom: `1px solid ${isDarkMode 
-                              ? `${categoryColor}15` 
-                              : `${categoryColor}08`}`,
+                              ? `linear-gradient(135deg, ${categoryColor}18 0%, ${categoryColor}08 100%)`
+                              : `linear-gradient(135deg, ${categoryColor}12 0%, ${categoryColor}05 100%)`,
+                            borderBottom: `2px solid ${isDarkMode
+                              ? `${categoryColor}20`
+                              : `${categoryColor}15`}`,
                             overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}>
-                            <img 
-                              src={product.image}
-                              alt={product.name}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                filter: product.stock === 0 ? 'grayscale(100%)' : 'none',
-                                transition: 'transform 0.3s',
-                              }}
-                              onMouseEnter={(e) => {
-                                if (product.stock > 0) {
-                                  e.currentTarget.style.transform = 'scale(1.05)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'scale(1)';
-                              }}
-                              onError={(e) => {
-                                // Fallback to placeholder if image fails to load
-                                e.currentTarget.src = `https://via.placeholder.com/300x300/00A6B8/FFFFFF?text=${categoryIcon}`;
-                              }}
-                            />
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  filter: product.stock === 0 ? 'grayscale(100%)' : 'none',
+                                  transition: 'transform 0.3s',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (product.stock > 0) {
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                                onError={(e) => {
+                                  // Hide broken image and show placeholder
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: 16,
+                                background: isDarkMode
+                                  ? 'linear-gradient(135deg, #2A2A2A 0%, #1F1F1F 100%)'
+                                  : 'linear-gradient(135deg, #F0F0F0 0%, #E6E6E6 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: isDarkMode ? '2px solid #2A2A2A' : '2px solid #F0F0F0',
+                              }}>
+                                <svg
+                                  viewBox="0 0 1024 1024"
+                                  style={{
+                                    fontSize: 32,
+                                    color: isDarkMode ? '#555' : '#BFBFBF',
+                                    width: '1em',
+                                    height: '1em',
+                                    fill: 'currentColor',
+                                  }}
+                                >
+                                  <path d="M885.2 446.3l-.2-.8-112.2-285.1c-5-16.1-19.9-27.2-36.8-27.2H281.2c-17 0-32.1 11.3-36.9 27.6L139.4 443l-.3.7-.2.8c-1.3 4.9-1.7 9.9-1 14.8-.1 1.6-.2 3.2-.2 4.8V830a60.9 60.9 0 0060.8 60.8h627.2c33.5 0 60.8-27.3 60.9-60.8V464.1c0-1.3 0-2.6-.1-3.7.4-4.9 0-9.6-1.3-14.1zm-295.8-43l-.3 15.7c-.8 44.9-31.8 75.1-77.1 75.1-22.1 0-41.1-7.1-54.8-20.6S436 441.2 435.6 419l-.3-15.7H229.5L309 210h399.2l81.7 193.3H589.4zm-375 76.8h157.3c24.3 57.1 76 90.8 140.4 90.8 33.7 0 65-9.4 90.3-27.2 22.2-15.6 39.5-37.4 50.7-63.6h156.5V814H214.4V480.1z"></path>
+                                </svg>
+                              </div>
+                            )}
                             
                             {/* Category Badge */}
                             <div style={{
@@ -866,15 +1168,14 @@ const POSSales: React.FC = () => {
                               alignItems: 'center',
                               gap: 4,
                             }}>
-                              <span style={{ fontSize: 12 }}>{categoryIcon}</span>
-                              <Text style={{ 
+                              <Text style={{
                                 fontSize: 10,
                                 fontWeight: 600,
                                 color: '#9E9E9E',
                                 textTransform: 'uppercase',
                                 letterSpacing: 0.5,
                               }}>
-                                {categories.find(c => c.key === product.category)?.label}
+                                {categories.find(c => c.key === product.category || c.slug === product.category)?.label}
                               </Text>
                             </div>
                             
@@ -946,16 +1247,20 @@ const POSSales: React.FC = () => {
                               {product.barcode}
                             </div>
                             
-                            {/* Price */}
-                            <div style={{ 
-                              fontSize: 19,
-                              fontWeight: 700,
-                              background: 'linear-gradient(135deg, #2196F3 0%, #2196F3DD 100%)',
+                            {/* Price - Premium Style */}
+                            <div style={{
+                              fontSize: 20,
+                              fontWeight: 800,
+                              background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}BB 100%)`,
                               WebkitBackgroundClip: 'text',
                               WebkitTextFillColor: 'transparent',
                               backgroundClip: 'text',
-                              marginBottom: 10,
-                              letterSpacing: -0.3,
+                              marginBottom: 12,
+                              letterSpacing: -0.5,
+                              textShadow: isDarkMode
+                                ? `0 2px 10px ${categoryColor}30`
+                                : `0 2px 10px ${categoryColor}20`,
+                              filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.1))',
                             }}>
                               {product.price.toLocaleString()}₫
                             </div>
@@ -1011,8 +1316,7 @@ const POSSales: React.FC = () => {
                 <List
                   dataSource={getFilteredProducts()}
                 renderItem={product => {
-                  const categoryColor = categories.find(c => c.key === product.category)?.color || '#00A6B8';
-                  const categoryIcon = categories.find(c => c.key === product.category)?.icon || '📦';
+                  const categoryColor = categories.find(c => c.key === product.category || c.slug === product.category)?.color || '#00A6B8';
                   return (
                     <List.Item
                       style={{
@@ -1044,40 +1348,41 @@ const POSSales: React.FC = () => {
                             overflow: 'hidden',
                             border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
                             position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: isDarkMode
+                              ? 'linear-gradient(135deg, #2A2A2A 0%, #1F1F1F 100%)'
+                              : 'linear-gradient(135deg, #F0F0F0 0%, #E6E6E6 100%)',
                           }}>
-                            <img 
-                              src={product.image}
-                              alt={product.name}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                filter: product.stock === 0 ? 'grayscale(100%)' : 'none',
-                              }}
-                              onError={(e) => {
-                                e.currentTarget.src = `https://via.placeholder.com/64x64/00A6B8/FFFFFF?text=${categoryIcon}`;
-                              }}
-                            />
-                            {/* Small category badge */}
-                            <div style={{
-                              position: 'absolute',
-                              bottom: 1,
-                              right: 1,
-                              width: 16,
-                              height: 16,
-                              borderRadius: '50%',
-                              background: isDarkMode
-                                ? 'rgba(0,0,0,0.7)'
-                                : 'rgba(255,255,255,0.9)',
-                              backdropFilter: 'blur(4px)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 8,
-                              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}`,
-                            }}>
-                              {categoryIcon}
-                            </div>
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  filter: product.stock === 0 ? 'grayscale(100%)' : 'none',
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <svg
+                                viewBox="0 0 1024 1024"
+                                style={{
+                                  fontSize: 20,
+                                  color: isDarkMode ? '#555' : '#BFBFBF',
+                                  width: '1em',
+                                  height: '1em',
+                                  fill: 'currentColor',
+                                }}
+                              >
+                                <path d="M885.2 446.3l-.2-.8-112.2-285.1c-5-16.1-19.9-27.2-36.8-27.2H281.2c-17 0-32.1 11.3-36.9 27.6L139.4 443l-.3.7-.2.8c-1.3 4.9-1.7 9.9-1 14.8-.1 1.6-.2 3.2-.2 4.8V830a60.9 60.9 0 0060.8 60.8h627.2c33.5 0 60.8-27.3 60.9-60.8V464.1c0-1.3 0-2.6-.1-3.7.4-4.9 0-9.6-1.3-14.1zm-295.8-43l-.3 15.7c-.8 44.9-31.8 75.1-77.1 75.1-22.1 0-41.1-7.1-54.8-20.6S436 441.2 435.6 419l-.3-15.7H229.5L309 210h399.2l81.7 193.3H589.4zm-375 76.8h157.3c24.3 57.1 76 90.8 140.4 90.8 33.7 0 65-9.4 90.3-27.2 22.2-15.6 39.5-37.4 50.7-63.6h156.5V814H214.4V480.1z"></path>
+                              </svg>
+                            )}
                           </div>
                         }
                         title={
@@ -1180,22 +1485,79 @@ const POSSales: React.FC = () => {
           )}
         </div>
 
-        {/* Right Panel - Cart & Payment */}
-        <div style={{ 
-          flex: '0 0 35%',
-          minWidth: 400,
-          display: 'flex', 
-          flexDirection: 'column',
-          background: isDarkMode ? '#0F1419' : '#FAFBFC',
-        }}>
+        {/* Floating Cart Button for Mobile - Premium Design */}
+        {!screens.md && (
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 999,
+            }}
+          >
+            <Badge
+              count={cart.reduce((sum, item) => sum + item.quantity, 0)}
+              offset={[-8, 8]}
+              style={{
+                background: 'linear-gradient(135deg, #FF5722 0%, #F44336 100%)',
+                boxShadow: '0 4px 12px rgba(255,87,34,0.5)',
+                fontWeight: 700,
+              }}
+            >
+              <Button
+                shape="circle"
+                size="large"
+                icon={<ShoppingCartOutlined />}
+                onClick={() => setCartDrawerVisible(true)}
+                style={{
+                  width: 70,
+                  height: 70,
+                  fontSize: 28,
+                  background: 'linear-gradient(135deg, #00A6B8 0%, #0288D1 100%)',
+                  border: 'none',
+                  boxShadow: '0 8px 24px rgba(0,166,184,0.5), 0 4px 12px rgba(0,0,0,0.2)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              />
+            </Badge>
+          </motion.div>
+        )}
+
+        {/* Right Panel - Cart & Payment (Desktop) / Drawer (Mobile) */}
+        {screens.md ? (
+          <div style={{
+            flex: '0 0 35%',
+            minWidth: 400,
+            display: 'flex',
+            flexDirection: 'column',
+            background: isDarkMode
+              ? 'linear-gradient(180deg, rgba(15,20,25,0.98) 0%, rgba(10,15,20,0.95) 100%)'
+              : 'linear-gradient(180deg, rgba(250,251,252,0.98) 0%, rgba(245,247,250,0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            position: 'relative',
+            zIndex: 1,
+          }}>
           
           {/* Beautiful Cart Header */}
-          <div style={{ 
-            padding: '8px',
-            background: `linear-gradient(135deg, ${isDarkMode ? '#2D1B69' : '#FFF8F3'} 0%, ${isDarkMode ? '#0F1419' : '#F3E5F5'} 100%)`,
-            borderBottom: `2px solid ${isDarkMode ? 'rgba(255,87,34,0.15)' : 'rgba(255,87,34,0.1)'}`,
+          <div style={{
+            padding: '16px 20px',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, rgba(0,166,184,0.15) 0%, rgba(45,27,105,0.2) 100%)'
+              : 'linear-gradient(135deg, rgba(255,248,243,0.8) 0%, rgba(243,229,245,0.8) 100%)',
+            borderBottom: `2px solid ${isDarkMode ? 'rgba(0,166,184,0.2)' : 'rgba(255,87,34,0.15)'}`,
             position: 'relative',
             overflow: 'hidden',
+            boxShadow: isDarkMode
+              ? '0 4px 20px rgba(0,0,0,0.3)'
+              : '0 4px 20px rgba(0,0,0,0.05)',
           }}>
             {/* Decorative Background Pattern */}
             <div style={{
@@ -1285,13 +1647,58 @@ const POSSales: React.FC = () => {
                     </Text>
                   </div>
                 </Space>
-                <Button 
-                  size="small" 
-                  type="text" 
-                  icon={<CloseOutlined />}
-                  onClick={() => setSelectedCustomer(null)}
-                  style={{ color: '#999', padding: '2px', minWidth: 'auto', height: 'auto' }}
-                />
+                <Space>
+                  {selectedCustomer.points > 0 && (
+                    <Tooltip title={`Sử dụng ${selectedCustomer.points} điểm thưởng`}>
+                      <Button
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<GiftOutlined />}
+                        onClick={() => setLoyaltyModalVisible(true)}
+                        style={{ fontSize: 10, height: 24 }}
+                      >
+                        Điểm
+                      </Button>
+                    </Tooltip>
+                  )}
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={() => {
+                      setSelectedCustomer(null);
+                      setLoyaltyDiscount(0);
+                      setUsedPoints(0);
+                    }}
+                    style={{ color: '#999', padding: '2px', minWidth: 'auto', height: 'auto' }}
+                  />
+                </Space>
+              </motion.div>
+            )}
+
+            {/* Loyalty Discount Display */}
+            {loyaltyDiscount > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                style={{
+                  background: `linear-gradient(135deg, rgba(250,173,20,0.1) 0%, rgba(250,173,20,0.05) 100%)`,
+                  borderRadius: 6,
+                  padding: '6px 8px',
+                  marginBottom: 8,
+                  border: '1px solid rgba(250,173,20,0.3)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Space size={4}>
+                    <TrophyOutlined style={{ color: '#faad14' }} />
+                    <Text style={{ fontSize: 11 }}>Đã dùng {usedPoints} điểm</Text>
+                  </Space>
+                  <Text strong style={{ color: '#52c41a', fontSize: 12 }}>
+                    -{loyaltyDiscount.toLocaleString()}₫
+                  </Text>
+                </div>
               </motion.div>
             )}
           </div>
@@ -1842,15 +2249,160 @@ const POSSales: React.FC = () => {
             </div>
           </div>
         </div>
+        ) : null}
+
+        {/* Mobile Cart Drawer */}
+        <Drawer
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShoppingCartOutlined style={{ fontSize: 20, color: '#00A6B8' }} />
+              <span>Giỏ hàng ({cart.reduce((sum, item) => sum + item.quantity, 0)} SP)</span>
+            </div>
+          }
+          placement="bottom"
+          height="85vh"
+          onClose={() => setCartDrawerVisible(false)}
+          open={cartDrawerVisible}
+          styles={{
+            body: { padding: 0 },
+            header: {
+              background: isDarkMode ? '#1A2332' : '#FAFBFC',
+              borderBottom: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#F0F0F0'}`,
+            }
+          }}
+        >
+          {/* Cart Content - Same as Desktop */}
+          <div style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: isDarkMode ? '#0F1419' : '#FAFBFC',
+          }}>
+            {/* Cart Header */}
+            <div style={{
+              padding: '12px 16px',
+              background: isDarkMode ? '#1A2332' : '#FAFBFC',
+              borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#F0F0F0'}`,
+            }}>
+              {selectedCustomer ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 12,
+                  background: isDarkMode ? 'rgba(0,166,184,0.1)' : 'rgba(0,166,184,0.05)',
+                  borderRadius: 8,
+                  border: `1px solid ${isDarkMode ? 'rgba(0,166,184,0.3)' : 'rgba(0,166,184,0.2)'}`,
+                }}>
+                  <Space>
+                    <UserOutlined style={{ fontSize: 18, color: '#00A6B8' }} />
+                    <div>
+                      <Text strong style={{ fontSize: 13 }}>{selectedCustomer.name}</Text>
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        {selectedCustomer.phone} • {selectedCustomer.points} điểm
+                      </div>
+                    </div>
+                  </Space>
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<CloseOutlined />}
+                    onClick={() => setSelectedCustomer(null)}
+                  />
+                </div>
+              ) : (
+                <Button
+                  block
+                  icon={<UserOutlined />}
+                  onClick={() => setCustomerModalVisible(true)}
+                >
+                  Chọn khách hàng
+                </Button>
+              )}
+            </div>
+
+            {/* Cart Items */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+              {cart.length === 0 ? (
+                <Empty description="Giỏ hàng trống" />
+              ) : (
+                <Table
+                  dataSource={cart}
+                  columns={cartColumns}
+                  pagination={false}
+                  rowKey="id"
+                  size="small"
+                />
+              )}
+            </div>
+
+            {/* Summary & Checkout */}
+            {cart.length > 0 && (
+              <div style={{
+                padding: 16,
+                background: isDarkMode ? '#131821' : '#FFFFFF',
+                borderTop: `2px solid ${isDarkMode ? 'rgba(0,166,184,0.3)' : 'rgba(0,166,184,0.2)'}`,
+              }}>
+                <Space direction="vertical" style={{ width: '100%' }} size="small">
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text>Tạm tính:</Text>
+                    <Text strong>{subtotal.toLocaleString()}₫</Text>
+                  </div>
+                  {discount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Text>Giảm giá:</Text>
+                      <Text type="danger">-{discount.toLocaleString()}₫</Text>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text>VAT (10%):</Text>
+                    <Text>{tax.toLocaleString()}₫</Text>
+                  </div>
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text strong style={{ fontSize: 16 }}>Tổng cộng:</Text>
+                    <Text strong style={{ fontSize: 20, color: '#00A6B8' }}>
+                      {total.toLocaleString()}₫
+                    </Text>
+                  </div>
+
+                  <Space style={{ width: '100%', marginTop: 12 }} size="small">
+                    <Button
+                      block
+                      size="large"
+                      icon={<PauseOutlined />}
+                      onClick={holdInvoice}
+                    >
+                      Giữ
+                    </Button>
+                    <Button
+                      block
+                      size="large"
+                      type="primary"
+                      icon={<CheckOutlined />}
+                      onClick={() => {
+                        setPaymentModalVisible(true);
+                        setCartDrawerVisible(false);
+                      }}
+                    >
+                      Thanh toán
+                    </Button>
+                  </Space>
+                </Space>
+              </div>
+            )}
+          </div>
+        </Drawer>
 
         {/* Elegant Compact Payment Modal */}
         <Modal
           title={null}
           open={paymentModalVisible}
           onCancel={() => setPaymentModalVisible(false)}
-          width={480}
+          width={screens.xs ? '100%' : 480}
           footer={null}
-          centered
+          centered={!screens.xs}
           closable={false}
           styles={{
             body: { padding: 0 },
@@ -1950,10 +2502,10 @@ const POSSales: React.FC = () => {
                   Phương thức thanh toán
                 </Text>
                 
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 8,
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: screens.xs ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                  gap: screens.xs ? 10 : 8,
                 }}>
                   {[
                     { value: 'cash', icon: <DollarOutlined />, label: 'Tiền mặt', color: '#4CAF50' },
@@ -1982,14 +2534,14 @@ const POSSales: React.FC = () => {
                         }
                       }}
                       style={{
-                        padding: '12px 8px',
+                        padding: screens.xs ? '16px 12px' : '12px 8px',
                         borderRadius: 10,
-                        border: `1.5px solid ${paymentMethod === method.value 
-                          ? method.color 
+                        border: `1.5px solid ${paymentMethod === method.value
+                          ? method.color
                           : isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
                         background: paymentMethod === method.value
                           ? `${method.color}10`
-                          : isDarkMode 
+                          : isDarkMode
                             ? 'rgba(255,255,255,0.02)'
                             : 'rgba(0,0,0,0.01)',
                         cursor: 'pointer',
@@ -1997,12 +2549,13 @@ const POSSales: React.FC = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        gap: 6,
+                        gap: screens.xs ? 8 : 6,
                         position: 'relative',
+                        minHeight: screens.xs ? 70 : 'auto',
                       }}
                     >
                       <div style={{
-                        fontSize: 18,
+                        fontSize: screens.xs ? 24 : 18,
                         color: paymentMethod === method.value ? method.color : isDarkMode ? 'rgba(255,255,255,0.6)' : '#8c8c8c',
                       }}>
                         {method.icon}
@@ -2070,28 +2623,28 @@ const POSSales: React.FC = () => {
                   />
                   
                   {/* Elegant Quick Amounts */}
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: 6,
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: screens.xs ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                    gap: screens.xs ? 8 : 6,
                     marginBottom: receivedAmount >= total ? 10 : 0,
                   }}>
-                    {QUICK_AMOUNTS.slice(0, 4).map(amount => (
+                    {QUICK_AMOUNTS.slice(0, screens.xs ? 6 : 4).map(amount => (
                       <Button
                         key={amount}
-                        size="small"
+                        size={screens.xs ? "middle" : "small"}
                         onClick={() => setReceivedAmount(amount)}
-                        style={{ 
-                          flex: 1,
-                          height: 28,
-                          fontSize: 11,
+                        style={{
+                          height: screens.xs ? 40 : 28,
+                          fontSize: screens.xs ? 13 : 11,
                           borderColor: receivedAmount === amount ? '#4CAF50' : isDarkMode ? 'rgba(255,255,255,0.1)' : '#e8e8e8',
                           color: receivedAmount === amount ? '#4CAF50' : isDarkMode ? 'rgba(255,255,255,0.65)' : '#595959',
                           background: receivedAmount === amount ? 'rgba(76,175,80,0.1)' : 'transparent',
                           fontWeight: receivedAmount === amount ? 600 : 400,
                         }}
                       >
-                        {amount >= 1000000 
-                          ? `${(amount / 1000000).toFixed(0)}M` 
+                        {amount >= 1000000
+                          ? `${(amount / 1000000).toFixed(0)}M`
                           : `${(amount / 1000).toFixed(0)}K`}
                       </Button>
                     ))}
@@ -2251,7 +2804,7 @@ const POSSales: React.FC = () => {
             />
             
             <List
-              dataSource={mockCustomers}
+              dataSource={customers}
               renderItem={(customer) => (
                 <List.Item
                   style={{ 
@@ -2293,6 +2846,21 @@ const POSSales: React.FC = () => {
             </Button>
           </Space>
         </Modal>
+
+        {/* Dashboard Panel */}
+        <POSDashboardPanel
+          visible={dashboardVisible}
+          onClose={() => setDashboardVisible(false)}
+          isDarkMode={isDarkMode}
+        />
+
+        {/* Loyalty Points Modal */}
+        <LoyaltyPointsModal
+          visible={loyaltyModalVisible}
+          onClose={() => setLoyaltyModalVisible(false)}
+          customerId={selectedCustomer?.id || null}
+          onApplyDiscount={handleApplyLoyaltyDiscount}
+        />
       </div>
     </POSLayout>
   );

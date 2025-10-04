@@ -119,7 +119,7 @@ router.post('/products', authenticate, upload.array('images', 10), async (req, r
 });
 
 // Upload cover image
-router.post('/cover', authenticate, authorize(['admin', 'manager']), upload.single('cover'), async (req, res) => {
+router.post('/cover', authenticate, authorize('admin', 'manager'), upload.single('cover'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -147,7 +147,7 @@ router.post('/cover', authenticate, authorize(['admin', 'manager']), upload.sing
 });
 
 // Upload logo image
-router.post('/logo', authenticate, authorize(['admin']), upload.single('logo'), async (req, res) => {
+router.post('/logo', authenticate, authorize('admin'), upload.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -224,7 +224,7 @@ router.delete('/image', authenticate, async (req, res) => {
 });
 
 // Delete multiple images
-router.post('/delete-multiple', authenticate, authorize(['admin', 'manager']), async (req, res) => {
+router.post('/delete-multiple', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { urls } = req.body;
     

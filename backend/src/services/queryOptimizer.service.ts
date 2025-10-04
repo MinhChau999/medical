@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import pool from '../config/database';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 interface PaginationOptions {
   page?: number;

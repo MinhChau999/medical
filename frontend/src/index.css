@@ -15,6 +15,7 @@ html, body {
   overflow-x: hidden;
   max-width: 100%;
   scroll-behavior: smooth;
+  overscroll-behavior: none;
 }
 
 body {
@@ -32,6 +33,28 @@ body.ant-scrolling-effect {
 /* Smooth scrolling for all elements */
 * {
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize rendering performance */
+.ant-card,
+.ant-carousel,
+img {
+  will-change: auto;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Ensure Card has proper padding */
+.ant-card-body {
+  padding: 24px !important;
+}
+
+/* Responsive card padding */
+@media (max-width: 768px) {
+  .ant-card-body {
+    padding: 16px !important;
+  }
 }
 
 #root {
@@ -355,11 +378,13 @@ body.ant-scrolling-effect {
   transition: none !important;
 }
 
-/* Smooth transitions cho tất cả elements */
-.ant-table,
-.ant-card,
+/* Smooth transitions - chỉ animate properties cần thiết */
+.ant-table {
+  transition: opacity 0.2s ease;
+}
+
 .ant-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 /* Professional Switch Animations */

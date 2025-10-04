@@ -8,7 +8,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { generalLimiter, authLimiter } from './middleware/rateLimiter';
 import { sanitizeInput } from './middleware/validation';
-// import { setupSwagger } from './config/swagger';
+import { setupSwagger } from './config/swagger';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 // import productRoutes from './routes/products-mock.routes';
@@ -20,6 +20,14 @@ import analyticsRoutes from './routes/analytics.routes';
 import paymentRoutes from './routes/payment.routes';
 import categoriesRoutes from './routes/categories.routes';
 import uploadRoutes from './routes/upload.routes';
+import homepageRoutes from './routes/homepage.routes';
+import databaseRoutes from './routes/database.routes';
+import apiStatusRoutes from './routes/api-status.routes';
+import securityRoutes from './routes/security.routes';
+import blogRoutes from './routes/blog.routes';
+import guestOrderRoutes from './routes/guest-order.routes';
+import settingsRoutes from './routes/settings.routes';
+import posRoutes from './routes/pos.routes';
 import { initializeModels } from './models';
 
 // Load .env from root directory
@@ -67,7 +75,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeInput);
 
 // Setup Swagger documentation
-// setupSwagger(app);
+setupSwagger(app);
 
 // Apply rate limiters only in production
 if (process.env.NODE_ENV === 'production') {
@@ -88,6 +96,14 @@ app.use(`/api/${API_VERSION}/warehouses`, warehouseRoutes);
 app.use(`/api/${API_VERSION}/analytics`, analyticsRoutes);
 app.use(`/api/${API_VERSION}/payment`, paymentRoutes);
 app.use(`/api/${API_VERSION}/upload`, uploadRoutes);
+app.use(`/api/${API_VERSION}/homepage`, homepageRoutes);
+app.use(`/api/${API_VERSION}/database`, databaseRoutes);
+app.use(`/api/${API_VERSION}/api-status`, apiStatusRoutes);
+app.use(`/api/${API_VERSION}/security`, securityRoutes);
+app.use(`/api/${API_VERSION}/blog`, blogRoutes);
+app.use(`/api/${API_VERSION}/guest-orders`, guestOrderRoutes);
+app.use(`/api/${API_VERSION}/settings`, settingsRoutes);
+app.use(`/api/${API_VERSION}/pos`, posRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

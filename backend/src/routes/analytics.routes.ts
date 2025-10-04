@@ -7,7 +7,7 @@ const analyticsService = new AnalyticsService();
 
 // All analytics routes require authentication and admin/manager role
 router.use(authenticate);
-router.use(authorize(['admin', 'manager']));
+router.use(authorize('admin', 'manager'));
 
 // Sales metrics
 router.get('/sales/metrics', async (req, res) => {

@@ -15,13 +15,13 @@ router.get('/:id', ProductsRawController.getProduct);
 router.use(authenticate);
 
 // Admin and Manager routes
-router.post('/', authorize(['admin', 'manager']), ProductsRawController.createProduct);
-router.put('/:id', authorize(['admin', 'manager']), ProductsRawController.updateProduct);
-router.patch('/:id/stock', authorize(['admin', 'manager', 'staff']), ProductsRawController.updateStock);
-router.delete('/:id', authorize(['admin']), ProductsRawController.deleteProduct);
+router.post('/', authorize('admin', 'manager'), ProductsRawController.createProduct);
+router.put('/:id', authorize('admin', 'manager'), ProductsRawController.updateProduct);
+router.patch('/:id/stock', authorize('admin', 'manager', 'staff'), ProductsRawController.updateStock);
+router.delete('/:id', authorize('admin'), ProductsRawController.deleteProduct);
 
 // Bulk operations
-router.post('/bulk-update', authorize(['admin', 'manager']), ProductsRawController.bulkUpdateProducts);
-router.post('/bulk-delete', authorize(['admin']), ProductsRawController.bulkDeleteProducts);
+router.post('/bulk-update', authorize('admin', 'manager'), ProductsRawController.bulkUpdateProducts);
+router.post('/bulk-delete', authorize('admin'), ProductsRawController.bulkDeleteProducts);
 
 export default router;

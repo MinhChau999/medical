@@ -31,7 +31,7 @@ import type { Category } from '@/services/categories';
 
 const { TextArea } = Input;
 const { Option } = Select;
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface ProductModalProps {
   visible: boolean;

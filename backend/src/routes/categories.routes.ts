@@ -10,8 +10,8 @@ router.get('/:id', CategoriesController.getCategory);
 router.post('/reorder', CategoriesController.updateCategoriesOrder); // Made public for drag-and-drop
 
 // Admin routes
-router.post('/', authenticate, authorize(['admin', 'staff']), CategoriesController.createCategory);
-router.put('/:id', authenticate, authorize(['admin', 'staff']), CategoriesController.updateCategory);
-router.delete('/:id', authenticate, authorize(['admin']), CategoriesController.deleteCategory);
+router.post('/', authenticate, authorize('admin', 'staff'), CategoriesController.createCategory);
+router.put('/:id', authenticate, authorize('admin', 'staff'), CategoriesController.updateCategory);
+router.delete('/:id', authenticate, authorize('admin'), CategoriesController.deleteCategory);
 
 export default router;

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import pool from '../config/database';
 import { cacheService, cacheMiddleware } from '../services/cache.service';
 import { queryOptimizer } from '../services/queryOptimizer.service';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 /**
  * @swagger

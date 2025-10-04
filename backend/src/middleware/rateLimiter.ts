@@ -25,7 +25,7 @@ const generalLimiterMiddleware = rateLimit({
     res.status(429).json({
       error: 'Too many requests',
       message: 'Rate limit exceeded. Please try again later.',
-      retryAfter: req.rateLimit?.resetTime
+      retryAfter: (req as any).rateLimit?.resetTime
     });
   }
 });
